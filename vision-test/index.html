@@ -3,10 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
 <title>בדיקת חדות ראייה</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: one-screen-at-a-time stepper. Calibration stage with real-size outline, white "chart paper" stage for optotypes, facilitator keypad below. */
+/* Layout: the app fills the viewport height. One step per screen, nothing scrolls on a normal phone. Calibration stage and chart paper flex to the free space; controls are pinned at the bottom. */
 :root{
   --bg:#E8EDEF;
   --surface:#FFFFFF;
@@ -41,281 +42,302 @@
   color-scheme:dark;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
+html{height:100vh;height:100dvh}
 body{
-  background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.55;
-  padding-block:16px 40px;
+  height:100%;margin:0;overflow:hidden;
+  background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;
+  padding-block:10px;
   padding-left:max(16px,env(safe-area-inset-left,0px));
   padding-right:max(16px,env(safe-area-inset-right,0px));
 }
-.app{max-width:560px;margin:0 auto;display:grid;gap:16px}
-.top{display:grid;gap:12px}
-.brand{display:flex;align-items:center;gap:10px}
-.brand svg{width:26px;height:26px;color:var(--accent);flex:none}
-.brand h1{font-size:18px;margin:0;font-weight:700}
-.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-.steps li{border-top:3px solid var(--line);padding-top:5px;font-size:12px;color:var(--ink-2);text-align:start}
-.steps li.on{border-color:var(--accent);color:var(--ink);font-weight:600}
-.steps li.done{border-color:var(--accent)}
-.screen{display:grid;gap:14px;min-width:0}
-h2{font-size:22px;line-height:1.25;margin:0;font-weight:700;text-wrap:balance}
-h3{font-size:16px;margin:0;font-weight:600}
+.app{height:100%;max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:8px;min-height:0}
+.top{flex:none;display:grid;gap:6px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.brand{display:flex;align-items:center;gap:8px}
+.brand svg{width:22px;height:22px;color:var(--accent);flex:none}
+.brand h1{font-size:15px;margin:0;font-weight:700}
+#phase{font-size:12px;color:var(--ink-2)}
+.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.steps li{height:4px;border-radius:2px;background:var(--line);font-size:0}
+.steps li.on,.steps li.done{background:var(--accent)}
+.steps li.on{height:6px;margin-top:-1px}
+
+.screen{flex:1;min-height:0;display:flex;flex-direction:column;gap:10px;overflow:auto;overscroll-behavior:contain}
+.screen>*{flex:none;min-width:0}
+.screen>.grow{flex:1 1 auto;min-height:0}
+.screen>.nav{margin-top:auto}
+h2{font-size:20px;line-height:1.25;margin:0;font-weight:700;text-wrap:balance}
+h3{font-size:15px;margin:0;font-weight:600}
 p{margin:0}
-.lead{color:var(--ink-2)}
-.hint{font-size:14px;color:var(--ink-2)}
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:12px;min-width:0}
+.lead{color:var(--ink-2);font-size:14px}
+.hint{font-size:13px;color:var(--ink-2)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:10px;min-width:0}
 .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
 .small{font-size:13px}
-.btn{font:inherit;font-weight:600;min-height:48px;padding:0 20px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);cursor:pointer}
+.btn{font:inherit;font-weight:600;min-height:46px;padding:0 18px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);cursor:pointer}
 .btn.ghost{background:transparent;color:var(--accent)}
-.btn:focus-visible,.seg button:focus-visible,.keys button:focus-visible,.icon:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.actions{display:flex;flex-wrap:wrap;gap:10px}
-.actions .btn{flex:1 1 150px}
-.seg{display:flex;flex-wrap:wrap;gap:6px}
-.seg button{font:inherit;flex:1 1 auto;min-height:44px;padding:0 14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;cursor:pointer}
+.btn.sm{min-height:40px;font-size:14px;padding:0 12px}
+.btn:focus-visible,.seg button:focus-visible,.keys button:focus-visible,.icon:focus-visible,input:focus-visible,select:focus-visible,.linkbtn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.nav{display:grid;gap:8px}
+.row{display:flex;gap:8px}
+.row>*{flex:1 1 0;min-width:0}
+.seg{display:flex;gap:6px}
+.seg button{font:inherit;font-size:14px;flex:1 1 0;min-width:0;min-height:42px;padding:0 6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;cursor:pointer}
 .seg button[aria-checked="true"]{background:var(--accent-soft);border-color:var(--accent);font-weight:600}
-.field{display:grid;gap:6px}
-.field>span.lbl{font-size:14px;font-weight:600}
-ol.how,ul.plain{margin:0;padding-inline-start:22px;display:grid;gap:6px}
-.note{font-size:14px;color:var(--ink-2);border-top:1px solid var(--line);padding-top:12px}
+.field{display:grid;gap:5px}
+.lbl{font-size:14px;font-weight:600}
+ul.plain,ol.how{margin:0;padding-inline-start:20px;display:grid;gap:5px}
+.note{font-size:13px;color:var(--ink-2)}
 
 /* calibration */
-.stage{background:var(--surface-2);border:1px dashed var(--line);border-radius:10px;display:grid;place-items:center;min-height:200px;overflow:auto;touch-action:none;padding:20px;cursor:ew-resize;user-select:none;-webkit-user-select:none}
+.stage{background:var(--surface-2);border:1px dashed var(--line);border-radius:10px;display:flex;justify-content:center;align-items:center;min-height:140px;overflow:hidden;touch-action:none;padding:12px;cursor:ew-resize;user-select:none;-webkit-user-select:none}
+.stage.top{align-items:flex-start}
 .shape{position:relative;flex:none;border:2px solid var(--accent);background:var(--shape-fill)}
-.shape.coin{border-radius:50%}
 .shape::before,.shape::after{content:"";position:absolute;background:var(--accent);opacity:.45}
 .shape::before{left:0;right:0;top:calc(50% - .5px);height:1px}
 .shape::after{top:0;bottom:0;left:calc(50% - .5px);width:1px}
 .core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border:1.5px dashed var(--accent);border-radius:50%}
-.scalebar{display:flex;align-items:center;gap:10px;direction:ltr}
-.scalebar input[type=range]{flex:1;min-width:0;height:44px;accent-color:var(--accent)}
-.icon{font:inherit;font-size:22px;width:48px;height:48px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;flex:none}
-.readout{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;color:var(--ink-2)}
+.scalebar{display:flex;align-items:center;gap:8px;direction:ltr}
+.scalebar input[type=range]{flex:1;min-width:0;height:40px;accent-color:var(--accent)}
+.icon{font:inherit;font-size:22px;width:44px;height:44px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;flex:none}
+.readout{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--ink-2)}
 
 /* test */
-.testbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.chart{background:var(--chart-bg);border:1px solid var(--line);border-radius:10px;display:grid;place-items:center;overflow:hidden}
-.chart canvas{display:block}
-.keys{display:grid;gap:8px}
-.keys button{font-family:var(--mono);font-weight:600;font-size:22px;min-height:54px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.testbar{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:26px}
+.chart{background:var(--chart-bg);border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:90px}
+.chart canvas{display:block;flex:none}
+.side{display:flex;flex-direction:column;gap:8px}
+.keys{display:grid;gap:6px}
+.keys button{font-family:var(--mono);font-weight:600;font-size:20px;min-height:44px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;padding:0}
 .keys button:active{background:var(--accent-soft)}
-.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:13px;font-weight:600;background:var(--accent-soft);color:var(--ink)}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:13px;font-weight:600;background:var(--accent-soft);color:var(--ink);white-space:nowrap}
 .pill.good{background:var(--good-bg);color:var(--good)}
 .pill.warn{background:var(--warn-bg);color:var(--warn)}
 .pill.bad{background:var(--bad-bg);color:var(--bad)}
 .big{font-family:var(--mono);font-weight:600;font-size:40px;line-height:1.1}
-.cover{font-size:20px;font-weight:600}
+.cover{font-size:19px;font-weight:600}
+#tKbHint{display:none}
+@media (hover:hover) and (pointer:fine){#tKbHint{display:block}}
+@media (orientation:landscape) and (max-height:520px){
+  #s-test{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr;gap:8px 12px}
+  #s-test>.testbar{grid-column:1/-1}
+  #s-test>.chart{grid-column:1;grid-row:2;min-height:0}
+  #s-test>.side{grid-column:2;grid-row:2;justify-content:center}
+}
 
-/* form */
-input[type=text],input[type=number],select{font:inherit;width:100%;min-height:44px;border:1px solid var(--line);border-radius:8px;padding:0 10px;background:var(--surface);color:var(--ink)}
-.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
-fieldset{border:0;margin:0;padding:0;display:grid;gap:4px;min-width:0}
-legend{font-size:14px;font-weight:600;padding:0;margin-bottom:4px}
-label.check{display:flex;gap:10px;align-items:flex-start;min-height:36px;font-size:15px}
-label.check input{width:22px;height:22px;flex:none;margin:2px 0 0;accent-color:var(--accent)}
+/* forms */
+input[type=text],input[type=number],select{font:inherit;width:100%;min-height:42px;border:1px solid var(--line);border-radius:8px;padding:0 10px;background:var(--surface);color:var(--ink)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+label.check{display:flex;gap:10px;align-items:center;min-height:42px;font-size:15px;border:1px solid var(--line);border-radius:8px;padding:0 10px;background:var(--surface)}
+label.check input{width:22px;height:22px;flex:none;margin:0;accent-color:var(--accent)}
+.checks{display:grid;gap:6px}
 
 /* result */
-.alert{border:1px solid var(--bad);background:var(--bad-bg);padding:14px;border-radius:10px;display:grid;gap:4px}
-.verdict{display:grid;gap:8px}
-.verdict h2{font-size:21px}
-.tblwrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:start;white-space:nowrap}
+.page{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:10px;overflow:auto}
+.page>*{flex:none;min-width:0}
+.alert{border:1px solid var(--bad);background:var(--bad-bg);padding:10px 12px;border-radius:10px;display:grid;gap:2px;font-size:14px}
+.verdict{display:grid;gap:6px;justify-items:start}
+.verdict h2{font-size:19px}
+.verdict p{font-size:14px;color:var(--ink)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:start;white-space:nowrap}
 th{font-size:12px;color:var(--ink-2);font-weight:600}
 td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;direction:ltr;text-align:end}
-details summary{cursor:pointer;font-weight:600;min-height:40px;display:flex;align-items:center}
-details .body{display:grid;gap:8px;font-size:14px;color:var(--ink-2)}
+.prev{position:relative;flex:1 1 auto!important;min-height:90px;background:#fff;border:1px solid var(--line);border-radius:8px}
+.prev img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;-webkit-touch-callout:default;user-select:auto;-webkit-user-select:auto}
+.btns2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.linkbtn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-weight:600;min-height:40px;font-size:14px;padding:0 10px;border-radius:8px;border:1px solid var(--accent);color:var(--accent);text-align:center}
 a{color:var(--accent)}
-textarea{font:inherit;width:100%;min-height:120px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);padding:8px}
-.hd{display:grid;gap:8px}
-.left{display:grid;gap:8px;align-content:start;min-width:0}
-.narrow{justify-self:center;width:100%;max-width:620px}
-.linkbtn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-weight:600;min-height:48px;padding:0 20px;border-radius:8px;border:1px solid var(--accent);color:var(--accent);flex:1 1 150px;text-align:center}
-#imgPanel img{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:8px;background:#fff;-webkit-touch-callout:default;user-select:auto;-webkit-user-select:auto}
-#resBody{min-width:0}
-@media (min-width:900px){
-  .app{max-width:980px}
-  .split{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);column-gap:24px;align-items:start}
-  .split>.full{grid-column:1/-1}
-  .split>.left{grid-column:1;grid-row:2/span 6}
-  .split>.right{grid-column:2}
-  #resBody{grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:16px;align-items:start}
-  #resBody>.full{grid-column:1/-1}
-  #detailsForm{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px}
-  #detailsForm>.full{grid-column:1/-1}
-  .stage{min-height:340px}
-  h2{font-size:26px}
-  #imgPanel{max-width:620px;justify-self:center;width:100%}
+.src{font-size:12px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:4px 12px}
+@media (prefers-reduced-motion:no-preference){.screen{animation:in .15s ease-out}@keyframes in{from{opacity:.5}to{opacity:1}}}
+@media (min-width:700px) and (min-height:640px){
+  body{font-size:16px}
+  h2{font-size:24px}
+  .stage{min-height:260px}
+  .btn{min-height:48px}
 }
-@media (prefers-reduced-motion:no-preference){.screen{animation:in .18s ease-out}@keyframes in{from{opacity:.4}to{opacity:1}}}
 </style>
 
 <main class="app" id="app" dir="rtl" lang="he">
   <header class="top">
-    <div class="brand">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="4" stroke-dasharray="40 10.27" transform="rotate(36.7 12 12)"/></svg>
-      <h1>בדיקת חדות ראייה</h1>
+    <div class="topbar">
+      <div class="brand">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="4" stroke-dasharray="40 10.27" transform="rotate(36.7 12 12)"/></svg>
+        <h1>בדיקת חדות ראייה</h1>
+      </div>
+      <span id="phase"></span>
     </div>
-    <ol class="steps" id="steps" aria-label="שלבי הבדיקה">
-      <li>כיול</li><li>הכנה</li><li>בדיקה</li><li>פרטים</li><li>תוצאה</li>
-    </ol>
+    <ol class="steps" id="steps" aria-label="שלבי הבדיקה"><li>כיול</li><li>הכנה</li><li>בדיקה</li><li>פרטים</li><li>תוצאה</li></ol>
   </header>
 
   <!-- intro -->
-  <section class="screen narrow" id="s-intro">
+  <section class="screen" id="s-intro">
     <h2>בודקים ראייה למרחק, עין אחר עין</h2>
-    <p class="lead">מתאימים את גודל המסך למידות אמיתיות, הנבדק עומד במרחק קבוע ומקריא סימנים בגדלים יורדים, והמנחה מקליד את התשובות. בסוף מתקבלת הערכה אם כדאי להיבדק אצל אופטומטריסט.</p>
+    <p class="lead">מתאימים את גודל המסך למידות אמיתיות, הנבדק עומד במרחק קבוע ואומר מה הוא רואה, והמנחה מקליד. בסוף מקבלים הערכה אם כדאי להיבדק אצל אופטומטריסט.</p>
     <div class="panel">
       <h3>מה צריך</h3>
       <ul class="plain">
         <li>שני אנשים: נבדק/ת ומנחה</li>
-        <li>מטבע של ₪1, ₪5 או ₪10, או כרטיס אשראי</li>
-        <li>חדר או מסדרון באורך של 3 מטרים לפחות</li>
+        <li>מטבע ₪1, ₪5 או ₪10, או כרטיס אשראי</li>
+        <li>מקום באורך 3 מטרים לפחות</li>
         <li>כ-10 דקות</li>
       </ul>
     </div>
-    <p class="note">הבדיקה להדגמה בלבד. היא לא מחליפה בדיקת ראייה אצל אופטומטריסט או רופא עיניים, ואינה מתאימה לקביעת מרשם.</p>
-    <div class="actions"><button class="btn" id="goCalib" type="button">מתחילים בכיול</button></div>
+    <p class="note">הבדיקה להדגמה בלבד. היא לא מחליפה בדיקה אצל אופטומטריסט או רופא עיניים, ואינה מתאימה לקביעת מרשם.</p>
+    <div class="nav"><button class="btn" id="goCalib" type="button">מתחילים בכיול</button></div>
   </section>
 
   <!-- calibration -->
-  <section class="screen split" id="s-calib" hidden>
-    <div class="hd full"><h2>התאמת גודל המסך</h2>
-    <p class="lead">בחרו חפץ שיש בידיכם והניחו אותו על המסך, על הצורה. הזיזו את המחוון עד שהקו החיצוני של הצורה בדיוק בקצוות החפץ.</p></div>
-    <div class="seg right" id="objSeg" role="radiogroup" aria-label="חפץ לכיול"></div>
-    <div class="left"><div class="stage" id="calStage"><div class="shape" id="shape"><div class="core" id="core" hidden></div></div></div>
-    <p class="hint" id="objDim"></p></div>
-    <div class="scalebar right">
+  <section class="screen" id="s-calib" hidden>
+    <h2>התאמת גודל המסך</h2>
+    <p class="lead">הניחו את החפץ על הצורה, והזיזו את המחוון עד שהקו החיצוני בדיוק בקצוות החפץ.</p>
+    <div class="seg" id="objSeg" role="radiogroup" aria-label="חפץ לכיול"></div>
+    <div class="stage grow" id="calStage"><div class="shape" id="shape"><div class="core" id="core" hidden></div></div></div>
+    <p class="hint" id="objDim"></p>
+    <div class="scalebar">
       <button class="icon" id="scMinus" type="button" aria-label="הקטנה">−</button>
       <input type="range" id="scRange" min="3" max="12" step="0.01" aria-label="גודל הצורה">
       <button class="icon" id="scPlus" type="button" aria-label="הגדלה">+</button>
     </div>
-    <div class="readout right"><span>קנה מידה: <b class="mono" id="scVal"></b> פיקסלים למ״מ</span><span>צפיפות: <b class="mono" id="scPpi"></b> ppi</span></div>
-    <p class="hint right" id="calWarn" hidden></p>
-    <p class="hint right" id="zoomWarn" hidden></p>
-    <p class="hint right">אפשר גם לגרור על הצורה ימינה להגדלה ושמאלה להקטנה, ובמחשב לגלול עם גלגלת העכבר. לא מבצעים זום בדפדפן בזמן הכיול ובמהלך הבדיקה.</p>
-    <div class="actions right"><button class="btn" id="calOk" type="button">הגודל תואם, המשך</button></div>
+    <div class="readout"><span><b class="mono" id="scVal"></b> פיקסלים למ״מ</span><span><b class="mono" id="scPpi"></b> ppi</span></div>
+    <p class="hint" id="calWarn" hidden></p>
+    <p class="hint" id="zoomWarn" hidden></p>
+    <div class="nav"><button class="btn" id="calOk" type="button">הגודל תואם, המשך</button></div>
   </section>
 
-  <!-- setup -->
-  <section class="screen split" id="s-setup" hidden>
-    <h2 class="full">הכנה לבדיקה</h2>
-    <div class="panel left">
-      <div class="field"><span class="lbl">מרחק בין הנבדק/ת לטלפון או למסך</span><div class="seg" id="distSeg" role="radiogroup" aria-label="מרחק"></div><p class="hint" id="distInfo"></p></div>
-      <div class="field"><span class="lbl">סוג הסימנים</span><div class="seg" id="setSeg" role="radiogroup" aria-label="סוג סימנים"></div></div>
-      <div class="field"><span class="lbl">הנבדק/ת מרכיב/ה עכשיו משקפיים או עדשות?</span><div class="seg" id="glSeg" role="radiogroup" aria-label="משקפיים"></div></div>
+  <!-- setup A -->
+  <section class="screen" id="s-setupA" hidden>
+    <h2>מרחק וסימנים</h2>
+    <div class="field"><span class="lbl">מרחק בין הנבדק/ת למסך</span><div class="seg" id="distSeg" role="radiogroup" aria-label="מרחק"></div><p class="hint" id="distInfo"></p></div>
+    <div class="field"><span class="lbl">סוג הסימנים</span><div class="seg" id="setSeg" role="radiogroup" aria-label="סוג סימנים"></div></div>
+    <div class="field"><span class="lbl">הנבדק/ת מרכיב/ה עכשיו משקפיים או עדשות?</span><div class="seg" id="glSeg" role="radiogroup" aria-label="משקפיים"></div></div>
+    <p class="hint" id="fitWarn" hidden></p>
+    <div class="nav"><button class="btn" id="saNext" type="button">הבא</button><div class="row"><button class="btn ghost sm" id="saBack" type="button">חזרה לכיול</button></div></div>
+  </section>
+
+  <!-- setup B -->
+  <section class="screen" id="s-setupB" hidden>
+    <h2>הנחיות למנחה</h2>
+    <div class="panel">
+      <ol class="how" id="howList"></ol>
     </div>
-    <div class="panel right">
-      <h3>הנחיות למנחה</h3>
-      <ol class="how">
-        <li>הניחו את המכשיר זקוף על משטח יציב, בגובה העיניים של הנבדק/ת.</li>
-        <li>בהירות מסך מקסימלית, נעילת סיבוב אוטומטי, בלי זום בדפדפן.</li>
-        <li>תאורת חדר רגילה, בלי השתקפויות על המסך.</li>
-        <li>הנבדק/ת עומד/ת במרחק שנבחר, מכסה/ה עין אחת בכף יד פתוחה בלי ללחוץ, ואומר/ת את הסימן שהוא/היא רואה. אם לא בטוח/ה, מנחשים.</li>
-        <li>המנחה לוחץ/ת על הסימן שנאמר, או מקליד/ה אותו במקלדת (באנגלית).</li>
-      </ol>
-    </div>
-    <p class="hint full" id="fitWarn" hidden></p>
-    <div class="actions full"><button class="btn ghost" id="backCalib" type="button">חזרה לכיול</button><button class="btn" id="startTests" type="button">מתחילים בעין ימין</button></div>
+    <div class="nav"><button class="btn" id="startTests" type="button">מתחילים בעין ימין</button><div class="row"><button class="btn ghost sm" id="sbBack" type="button">הקודם</button></div></div>
   </section>
 
   <!-- cover -->
-  <section class="screen narrow" id="s-cover" hidden>
+  <section class="screen" id="s-cover" hidden>
     <h2 id="cvTitle"></h2>
     <div class="panel">
       <p class="cover" id="cvMain"></p>
       <p id="cvPin" hidden></p>
       <p id="cvDist"></p>
-      <p class="hint">הנבדק/ת אומר/ת את הסימן שהוא/היא רואה. אם לא בטוח/ה, מנחשים. אם לא רואים כלל, אומרים ״לא רואה״.</p>
+      <p class="hint">הנבדק/ת אומר/ת מה הוא/היא רואה. אם לא בטוח/ה, מנחשים. אם לא רואים, אומרים ״לא רואה״.</p>
     </div>
-    <div class="actions"><button class="btn ghost" id="cvSkip" type="button" hidden>דלג על שלב זה</button><button class="btn" id="cvGo" type="button">הנבדק/ת במרחק, מתחילים</button></div>
+    <div class="nav"><button class="btn" id="cvGo" type="button">הנבדק/ת במרחק, מתחילים</button><div class="row"><button class="btn ghost sm" id="cvSkip" type="button" hidden>דלג על שלב זה</button></div></div>
   </section>
 
   <!-- test -->
-  <section class="screen split" id="s-test" hidden>
-    <div class="testbar full"><div><strong id="tEye"></strong> <span class="pill" id="tPin" hidden>חור סיכה</span></div><div class="mono small" id="tInfo"></div></div>
-    <div class="chart left" id="chart"><canvas id="cv"></canvas></div>
-    <div class="keys right" id="keys"></div>
-    <div class="actions right"><button class="btn ghost" id="tUnknown" type="button">לא רואה / לא בטוח</button><button class="btn ghost" id="tUndo" type="button">ביטול תשובה אחרונה</button><button class="btn ghost" id="tSkip" type="button">דלג על העין</button></div>
-    <p class="hint right" id="tKbHint"></p>
+  <section class="screen" id="s-test" hidden>
+    <div class="testbar"><div><strong id="tEye"></strong> <span class="pill" id="tPin" hidden>חור סיכה</span></div><div class="mono small" id="tInfo"></div></div>
+    <div class="chart grow" id="chart"><canvas id="cv"></canvas></div>
+    <div class="side">
+      <div class="keys" id="keys"></div>
+      <div class="row"><button class="btn ghost sm" id="tUnknown" type="button">לא רואה</button><button class="btn ghost sm" id="tUndo" type="button">ביטול אחרון</button><button class="btn ghost sm" id="tSkip" type="button">דלג על העין</button></div>
+      <p class="hint" id="tKbHint"></p>
+    </div>
   </section>
 
   <!-- eye result -->
-  <section class="screen narrow" id="s-eyeres" hidden>
+  <section class="screen" id="s-eyeres" hidden>
     <h2 id="erTitle"></h2>
     <div class="panel"><div class="big" id="erBig"></div><p id="erSub" class="mono small"></p><p id="erNote"></p></div>
-    <div class="actions"><button class="btn ghost" id="erPin" type="button" hidden>בדיקה חוזרת דרך חור סיכה</button><button class="btn" id="erNext" type="button">המשך</button></div>
+    <div class="nav"><button class="btn" id="erNext" type="button">המשך</button><div class="row"><button class="btn ghost sm" id="erPin" type="button" hidden>בדיקה חוזרת דרך חור סיכה</button></div></div>
   </section>
 
   <!-- handoff -->
-  <section class="screen narrow" id="s-handoff" hidden>
+  <section class="screen" id="s-handoff" hidden>
     <h2>הבדיקה הסתיימה</h2>
     <div class="panel">
       <p><b>נבדק/ת:</b> אפשר להתקרב ולהפסיק לכסות את העין.</p>
       <p><b>מנחה:</b> קחו את הטלפון והמשיכו למילוי פרטים על הנבדק/ת.</p>
     </div>
-    <div class="actions"><button class="btn" id="hoGo" type="button">אני המנחה, ממשיכים</button></div>
+    <div class="nav"><button class="btn" id="hoGo" type="button">אני המנחה, ממשיכים</button></div>
   </section>
 
-  <!-- form -->
-  <section class="screen" id="s-form" hidden>
-    <h2>פרטים על הנבדק/ת</h2>
-    <p class="lead">כל השאלות אופציונליות. אם לא יודעים, משאירים ריק או בוחרים ״לא ידוע״. מה שלא סומן נחשב כלא דווח, ולא כ״אין״.</p>
-    <form class="panel" id="detailsForm" autocomplete="off">
-      <div class="field"><label class="lbl" for="fName">שם או כינוי (לא נשמר)</label><input type="text" id="fName"></div>
+  <!-- form 1 -->
+  <section class="screen fs" id="s-f1" hidden>
+    <h2>פרטים על הנבדק/ת <span class="hint">1 מתוך 5</span></h2>
+    <p class="lead">כל השאלות אופציונליות. אם לא יודעים, משאירים ריק או בוחרים ״לא ידוע״.</p>
+    <div class="grid2">
+      <div class="field"><label class="lbl" for="fName">שם (לא נשמר)</label><input type="text" id="fName"></div>
       <div class="field"><label class="lbl" for="fAge">גיל</label><input type="number" id="fAge" min="3" max="110" inputmode="numeric" placeholder="לא ידוע"></div>
-      <div class="field"><label class="lbl" for="fCorr">תיקון אופטי קבוע</label>
-        <select id="fCorr"><option value="">לא ידוע</option><option value="none">אין</option><option value="distance">משקפיים למרחק</option><option value="reading">משקפי קריאה</option><option value="progressive">משקפיים מולטיפוקליים או דו-מוקדיים</option><option value="contacts">עדשות מגע</option></select></div>
-      <div class="field"><label class="lbl" for="fLast">בדיקת עיניים אחרונה</label>
-        <select id="fLast"><option value="">לא ידוע</option><option value="y1">לפני פחות משנה</option><option value="y2">לפני 1 עד 2 שנים</option><option value="y3">לפני יותר משנתיים</option><option value="never">אף פעם</option></select></div>
-      <fieldset class="full"><legend>מספרים במרשם הנוכחי, אם ידועים (SPH / CYL)</legend>
-        <div class="grid2">
-          <input type="text" id="fRS" inputmode="decimal" placeholder="ימין SPH" aria-label="ימין SPH">
-          <input type="text" id="fRC" inputmode="decimal" placeholder="ימין CYL" aria-label="ימין CYL">
-          <input type="text" id="fLS" inputmode="decimal" placeholder="שמאל SPH" aria-label="שמאל SPH">
-          <input type="text" id="fLC" inputmode="decimal" placeholder="שמאל CYL" aria-label="שמאל CYL">
-        </div>
-      </fieldset>
-      <fieldset><legend>תסמינים (סמנו רק מה שידוע)</legend>
-        <label class="check"><input type="checkbox" name="sym" value="blurFar">טשטוש בראייה למרחק</label>
-        <label class="check"><input type="checkbox" name="sym" value="blurNear">קושי בקריאה מקרוב</label>
-        <label class="check"><input type="checkbox" name="sym" value="headache">כאבי ראש או מאמץ בעיניים</label>
-        <label class="check"><input type="checkbox" name="sym" value="glare">סנוור או קושי בראייה בלילה</label>
-      </fieldset>
-      <fieldset><legend>תסמינים שדורשים התייחסות דחופה</legend>
-        <label class="check"><input type="checkbox" name="urg" value="flash">הבזקי אור או נקודות צפות חדשות</label>
-        <label class="check"><input type="checkbox" name="urg" value="curtain">צל או וילון בשדה הראייה</label>
-        <label class="check"><input type="checkbox" name="urg" value="sudden">ירידה פתאומית בראייה</label>
-        <label class="check"><input type="checkbox" name="urg" value="pain">כאב עין חזק עם אדמומיות</label>
-      </fieldset>
-      <fieldset><legend>רקע (סמנו רק מה שידוע)</legend>
-        <label class="check"><input type="checkbox" name="hx" value="diabetes">סוכרת</label>
-        <label class="check"><input type="checkbox" name="hx" value="glaucomaFam">גלאוקומה במשפחה</label>
-        <label class="check"><input type="checkbox" name="hx" value="myopiaFam">קוצר ראייה במשפחה</label>
-        <label class="check"><input type="checkbox" name="hx" value="eyeHx">מחלת עיניים או ניתוח עיניים בעבר</label>
-      </fieldset>
-      <div class="field"><label class="lbl" for="fScreen">שעות מסך ביום</label>
-        <select id="fScreen"><option value="">לא ידוע</option><option value="0-2">עד 2</option><option value="3-5">3 עד 5</option><option value="6-9">6 עד 9</option><option value="10+">10 ומעלה</option></select></div>
-      <div class="actions full"><button class="btn ghost" id="formSkip" type="button">דלג על הפרטים</button><button class="btn" id="formGo" type="submit">הצג תוצאה</button></div>
-    </form>
+    </div>
+    <div class="field"><label class="lbl" for="fCorr">תיקון אופטי קבוע</label>
+      <select id="fCorr"><option value="">לא ידוע</option><option value="none">אין</option><option value="distance">משקפיים למרחק</option><option value="reading">משקפי קריאה</option><option value="progressive">מולטיפוקליים או דו-מוקדיים</option><option value="contacts">עדשות מגע</option></select></div>
+    <div class="field"><label class="lbl" for="fLast">בדיקת עיניים אחרונה</label>
+      <select id="fLast"><option value="">לא ידוע</option><option value="y1">לפני פחות משנה</option><option value="y2">לפני 1 עד 2 שנים</option><option value="y3">לפני יותר משנתיים</option><option value="never">אף פעם</option></select></div>
+    <div class="nav"><button class="btn" data-act="next" type="button">הבא</button><div class="row"><button class="btn ghost sm" data-act="prev" type="button">הקודם</button><button class="btn ghost sm" data-act="skip" type="button">דלג על כל הפרטים</button></div></div>
+  </section>
+
+  <!-- form 2 -->
+  <section class="screen fs" id="s-f2" hidden>
+    <h2>מרשם ושעות מסך <span class="hint">2 מתוך 5</span></h2>
+    <div class="field"><span class="lbl">מספרים במרשם הנוכחי, אם ידועים</span>
+      <div class="grid2">
+        <input type="text" id="fRS" inputmode="decimal" placeholder="ימין SPH" aria-label="ימין SPH">
+        <input type="text" id="fRC" inputmode="decimal" placeholder="ימין CYL" aria-label="ימין CYL">
+        <input type="text" id="fLS" inputmode="decimal" placeholder="שמאל SPH" aria-label="שמאל SPH">
+        <input type="text" id="fLC" inputmode="decimal" placeholder="שמאל CYL" aria-label="שמאל CYL">
+      </div></div>
+    <div class="field"><label class="lbl" for="fScreen">שעות מסך ביום</label>
+      <select id="fScreen"><option value="">לא ידוע</option><option value="0-2">עד 2</option><option value="3-5">3 עד 5</option><option value="6-9">6 עד 9</option><option value="10+">10 ומעלה</option></select></div>
+    <div class="nav"><button class="btn" data-act="next" type="button">הבא</button><div class="row"><button class="btn ghost sm" data-act="prev" type="button">הקודם</button><button class="btn ghost sm" data-act="skip" type="button">דלג על כל הפרטים</button></div></div>
+  </section>
+
+  <!-- form 3 -->
+  <section class="screen fs" id="s-f3" hidden>
+    <h2>תסמינים <span class="hint">3 מתוך 5</span></h2>
+    <p class="lead">סמנו רק מה שידוע. מה שלא סומן נחשב כלא דווח, ולא כ״אין״.</p>
+    <div class="checks">
+      <label class="check"><input type="checkbox" name="sym" value="blurFar">טשטוש בראייה למרחק</label>
+      <label class="check"><input type="checkbox" name="sym" value="blurNear">קושי בקריאה מקרוב</label>
+      <label class="check"><input type="checkbox" name="sym" value="headache">כאבי ראש או מאמץ בעיניים</label>
+      <label class="check"><input type="checkbox" name="sym" value="glare">סנוור או קושי בראייה בלילה</label>
+    </div>
+    <div class="nav"><button class="btn" data-act="next" type="button">הבא</button><div class="row"><button class="btn ghost sm" data-act="prev" type="button">הקודם</button><button class="btn ghost sm" data-act="skip" type="button">דלג על כל הפרטים</button></div></div>
+  </section>
+
+  <!-- form 4 -->
+  <section class="screen fs" id="s-f4" hidden>
+    <h2>תסמינים דחופים <span class="hint">4 מתוך 5</span></h2>
+    <p class="lead">סמנו רק אם קיים כרגע או התחיל לאחרונה.</p>
+    <div class="checks">
+      <label class="check"><input type="checkbox" name="urg" value="flash">הבזקי אור או נקודות צפות חדשות</label>
+      <label class="check"><input type="checkbox" name="urg" value="curtain">צל או וילון בשדה הראייה</label>
+      <label class="check"><input type="checkbox" name="urg" value="sudden">ירידה פתאומית בראייה</label>
+      <label class="check"><input type="checkbox" name="urg" value="pain">כאב עין חזק עם אדמומיות</label>
+    </div>
+    <div class="nav"><button class="btn" data-act="next" type="button">הבא</button><div class="row"><button class="btn ghost sm" data-act="prev" type="button">הקודם</button><button class="btn ghost sm" data-act="skip" type="button">דלג על כל הפרטים</button></div></div>
+  </section>
+
+  <!-- form 5 -->
+  <section class="screen fs" id="s-f5" hidden>
+    <h2>רקע רפואי <span class="hint">5 מתוך 5</span></h2>
+    <p class="lead">סמנו רק מה שידוע.</p>
+    <div class="checks">
+      <label class="check"><input type="checkbox" name="hx" value="diabetes">סוכרת</label>
+      <label class="check"><input type="checkbox" name="hx" value="glaucomaFam">גלאוקומה במשפחה</label>
+      <label class="check"><input type="checkbox" name="hx" value="myopiaFam">קוצר ראייה במשפחה</label>
+      <label class="check"><input type="checkbox" name="hx" value="eyeHx">מחלת עיניים או ניתוח עיניים בעבר</label>
+    </div>
+    <div class="nav"><button class="btn" data-act="next" type="button">הצג תוצאה</button><div class="row"><button class="btn ghost sm" data-act="prev" type="button">הקודם</button><button class="btn ghost sm" data-act="skip" type="button">דלג על כל הפרטים</button></div></div>
   </section>
 
   <!-- result -->
   <section class="screen" id="s-result" hidden>
-    <div id="resBody" class="screen"></div>
-    <div class="actions"><button class="btn" id="imgBtn" type="button">תמונת דוח לשיתוף</button><button class="btn ghost" id="copyBtn" type="button">העתקת סיכום כטקסט</button><button class="btn ghost" id="again" type="button">בדיקה חדשה</button></div>
-    <div class="panel" id="imgPanel" hidden>
-      <h3>הדוח כתמונה</h3>
-      <img id="repImg" alt="דוח בדיקת הראייה כתמונה">
-      <p class="hint" id="imgHelp"></p>
-      <p class="hint" id="imgMsg" role="status"></p>
-      <div class="actions">
-        <button class="btn" id="shareBtn" type="button" hidden>שיתוף</button>
-        <button class="btn ghost" id="copyImgBtn" type="button">העתקת התמונה</button>
-        <a class="linkbtn" id="waBtn" target="_blank" rel="noopener">וואטסאפ עם סיכום בטקסט</a>
-        <button class="btn ghost" id="dlBtn" type="button">הורדת תמונה</button>
-      </div>
-    </div>
-    <div id="copyFallback" hidden><textarea id="copyArea" readonly aria-label="סיכום להעתקה"></textarea></div>
+    <div class="page" id="resPage"></div>
+    <div class="nav"><button class="btn" id="rNext" type="button">הבא</button><div class="row"><button class="btn ghost sm" id="rPrev" type="button">הקודם</button><span class="hint" id="rDots" dir="ltr" style="align-self:center;text-align:center"></span></div></div>
   </section>
 </main>
 
@@ -333,10 +355,10 @@ function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
 
 /* ---------- data ---------- */
 var OBJ={
-  c1:{shape:'coin',d:18,label:'מטבע ₪1',dim:'מטבע ₪1: קוטר 18 מ״מ (בנק ישראל)'},
-  c5:{shape:'coin',d:24,label:'מטבע ₪5',dim:'מטבע ₪5: קוטר 24 מ״מ (בנק ישראל)'},
-  c10:{shape:'coin',d:23,core:16,label:'מטבע ₪10',dim:'מטבע ₪10: קוטר חיצוני 23 מ״מ, ליבה פנימית 16 מ״מ (בנק ישראל). הקו המקווקו מסמן את הליבה.'},
-  card:{shape:'card',w:53.98,h:85.6,label:'כרטיס אשראי',dim:'כרטיס אשראי: 85.6 × 53.98 מ״מ (תקן ISO/IEC 7810 ID-1). הכרטיס מוצג לאורך, והפינות מעוגלות ברדיוס של כ-3 מ״מ.'}
+  c1:{shape:'coin',d:18,label:'₪1',dim:'מטבע ₪1: קוטר 18 מ״מ'},
+  c5:{shape:'coin',d:24,label:'₪5',dim:'מטבע ₪5: קוטר 24 מ״מ'},
+  c10:{shape:'coin',d:23,core:16,label:'₪10',dim:'מטבע ₪10: קוטר 23 מ״מ, הקו המקווקו הוא הליבה (16 מ״מ)'},
+  card:{shape:'card',w:53.98,h:85.6,label:'כרטיס',dim:'כרטיס אשראי 85.6×53.98 מ״מ, מוצג לאורך. מיישרים את הצדדים והקצה העליון, והחלק התחתון נחתך במסך.'}
 };
 var coarse=window.matchMedia&&matchMedia('(pointer:coarse)').matches;
 var scale=parseFloat(lsGet('vt-scale'))||(coarse?6:3.78);
@@ -372,14 +394,14 @@ var START=7;
 var STEPS=[{k:'R',name:'עין ימין',cover:'העין השמאלית'},{k:'L',name:'עין שמאל',cover:'העין הימנית'},{k:'B',name:'שתי העיניים',cover:null}];
 var SETNAMES={letters:'אותיות',digits:'ספרות',e:'האות E (כיוון)'};
 
-var S={dist:3,set:'letters',glasses:false,stepI:0,t:null,res:{R:null,L:null,B:null},form:null,cur:'intro'};
+var S={dist:3,set:'letters',glasses:false,stepI:0,t:null,res:{R:null,L:null,B:null},form:null,cur:'intro',pages:[],pi:0};
 
 /* ---------- helpers ---------- */
 function stepsOf(d){return Math.round(d/0.75)}
 function sizeMM(L,distM){var th=5*Math.pow(10,L)/60*Math.PI/180;return 2*distM*1000*Math.tan(th/2)}
 function r2(x){return Math.round(x*100)/100}
 function va(L){
-  if(L===null||L===undefined) return {metric:'פחות מ-6/60',us:'פחות מ-20/200',log:'מעל 1.00',dec:'פחות מ-0.10',short:'<6/60'};
+  if(L===null||L===undefined) return {metric:'<6/60',us:'<20/200',log:'>1.00',dec:'<0.10',short:'<6/60'};
   var hit=null; LV.forEach(function(x){if(Math.abs(x[0]-L)<0.005)hit=x});
   var m6=6*Math.pow(10,L), u20=20*Math.pow(10,L), dec=Math.pow(10,-L);
   var metric=hit?hit[1]:'6/'+(m6>=10?Math.round(m6):(Math.round(m6*10)/10));
@@ -408,17 +430,20 @@ function estMyopia(L){
 }
 
 /* ---------- navigation ---------- */
-var STEPMAP={calib:0,setup:1,cover:2,test:2,eyeres:2,handoff:3,form:3,result:4};
+var PHASES=['כיול','הכנה','בדיקה','פרטים','תוצאה'];
+var STEPMAP={calib:0,setupA:1,setupB:1,cover:2,test:2,eyeres:2,handoff:3,f1:3,f2:3,f3:3,f4:3,f5:3,result:4};
 function go(id){
   S.cur=id;
-  $$('.screen').forEach(function(s){ if(s.id!=='resBody') s.hidden=(s.id!=='s-'+id); });
+  $$('.screen').forEach(function(s){s.hidden=(s.id!=='s-'+id)});
   var idx=STEPMAP[id];
   $$('#steps li').forEach(function(li,i){
-    li.className=(idx===undefined||idx<0)?'':(i===idx?'on':(i<idx?'done':''));
+    li.className=(idx===undefined)?'':(i===idx?'on':(i<idx?'done':''));
   });
-  window.scrollTo(0,0);
+  $('#phase').textContent=(idx===undefined)?'':PHASES[idx];
+  var sc=$('#s-'+id); if(sc) sc.scrollTop=0;
   if(id==='calib') renderShape();
-  if(id==='setup') renderSetup();
+  if(id==='setupA') renderSetupA();
+  if(id==='setupB') renderSetupB();
 }
 
 /* ---------- segmented control ---------- */
@@ -436,24 +461,22 @@ function seg(el,items,cur,onPick){
 function setScale(v){
   scale=Math.min(12,Math.max(3,Math.round(v*100)/100));
   $('#scRange').value=scale; lsSet('vt-scale',String(scale));
-  $('#scVal').textContent=scale.toFixed(2);
-  $('#scPpi').textContent=Math.round(scale*25.4);
-  renderShape(true);
+  renderShape();
 }
-function renderShape(skipTexts){
-  var o=OBJ[objKey], sh=$('#shape'), core=$('#core');
+function renderShape(){
+  var o=OBJ[objKey], sh=$('#shape'), core=$('#core'), st=$('#calStage');
+  st.classList.toggle('top',o.shape==='card');
   if(o.shape==='coin'){
-    sh.className='shape coin'; sh.style.width=sh.style.height=(o.d*scale)+'px'; sh.style.borderRadius='50%';
+    sh.style.width=sh.style.height=(o.d*scale)+'px'; sh.style.borderRadius='50%';
   } else {
-    sh.className='shape card'; sh.style.width=(o.w*scale)+'px'; sh.style.height=(o.h*scale)+'px'; sh.style.borderRadius=(3.18*scale)+'px';
+    sh.style.width=(o.w*scale)+'px'; sh.style.height=(o.h*scale)+'px'; sh.style.borderRadius=(3.18*scale)+'px';
   }
   if(o.core){core.hidden=false; core.style.width=core.style.height=(o.core*scale)+'px';} else core.hidden=true;
   $('#objDim').textContent=o.dim;
-  var stage=$('#calStage'), w=(o.shape==='coin'?o.d:o.w)*scale;
-  var warn=$('#calWarn');
-  if(w>stage.clientWidth-40 && stage.clientWidth>0){warn.hidden=false;warn.textContent='הצורה רחבה מהמסך ברוחב הנוכחי. אם הכרטיס נחתך, נסו מטבע או סובבו את הטלפון לרוחב.'}
-  else warn.hidden=true;
   $('#scVal').textContent=scale.toFixed(2); $('#scPpi').textContent=Math.round(scale*25.4); $('#scRange').value=scale;
+  var w=(o.shape==='coin'?o.d:o.w)*scale, warn=$('#calWarn');
+  if(st.clientWidth>0&&w>st.clientWidth-24){warn.hidden=false;warn.textContent='הצורה רחבה ממסך זה ברוחב הנוכחי. נסו חפץ קטן יותר.'}
+  else warn.hidden=true;
 }
 function initCalib(){
   var items=Object.keys(OBJ).map(function(k){return [k,OBJ[k].label]});
@@ -466,27 +489,36 @@ function initCalib(){
   st.addEventListener('pointermove',function(e){if(drag)setScale(drag.s+(e.clientX-drag.x)/120)});
   st.addEventListener('wheel',function(e){e.preventDefault();setScale(scale+(e.deltaY<0?0.05:-0.05))},{passive:false});
   ['pointerup','pointercancel'].forEach(function(n){st.addEventListener(n,function(){drag=null})});
-  $('#calOk').onclick=function(){lsSet('vt-dpr',String(window.devicePixelRatio||1));$('#zoomWarn').hidden=true;go('setup')};
-  setScale(scale);
+  $('#calOk').onclick=function(){lsSet('vt-dpr',String(window.devicePixelRatio||1));$('#zoomWarn').hidden=true;go('setupA')};
+  $('#scRange').value=scale;
 }
 
 /* ---------- setup ---------- */
-function renderSetup(){
-  seg($('#distSeg'),[[2,'2 מטר'],[3,'3 מטר'],[4,'4 מטר']],S.dist,function(v){S.dist=+v;distInfo();});
-  seg($('#setSeg'),[['letters','אותיות'],['digits','ספרות'],['e','האות E']],S.set,function(v){S.set=v;});
-  seg($('#glSeg'),[['no','בלי משקפיים'],['yes','עם משקפיים או עדשות']],S.glasses?'yes':'no',function(v){S.glasses=(v==='yes');});
-  distInfo();
-}
 function zoomChanged(){
   var s=parseFloat(lsGet('vt-dpr')),d=window.devicePixelRatio||1,vv=(window.visualViewport&&window.visualViewport.scale)||1;
   return (s&&Math.abs(s-d)>0.01)||Math.abs(vv-1)>0.02;
 }
+function renderSetupA(){
+  seg($('#distSeg'),[[2,'2 מטר'],[3,'3 מטר'],[4,'4 מטר']],S.dist,function(v){S.dist=+v;distInfo();});
+  seg($('#setSeg'),[['letters','אותיות'],['digits','ספרות'],['e','E כיוון']],S.set,function(v){S.set=v;});
+  seg($('#glSeg'),[['no','בלי משקפיים'],['yes','עם משקפיים או עדשות']],S.glasses?'yes':'no',function(v){S.glasses=(v==='yes');});
+  distInfo();
+}
 function distInfo(){
-  var n=stepsOf(S.dist);
-  $('#distInfo').textContent=S.dist+' מטר הם כ-'+n+' צעדים רגילים (צעד הוא כ-75 ס״מ). לדיוק מדדו עם סרט מדידה.';
-  var maxPx=sizeMM(1.0,S.dist)*scale, avail=Math.min(window.innerWidth-32,520), w=$('#fitWarn');
-  if(maxPx>avail){w.hidden=false;w.textContent='ב-'+S.dist+' מטר הסימן הגדול ביותר ('+Math.round(maxPx)+' פיקסלים) רחב מהמסך. בחרו מרחק קצר יותר או סובבו את הטלפון לרוחב.'}
+  $('#distInfo').textContent=S.dist+' מטר הם כ-'+stepsOf(S.dist)+' צעדים רגילים (צעד הוא כ-75 ס״מ). לדיוק מדדו עם סרט.';
+  var maxPx=sizeMM(1.0,S.dist)*scale, avail=Math.max(120,window.innerHeight-330), w=$('#fitWarn');
+  if(maxPx>avail){w.hidden=false;w.textContent='הסימן הגדול ביותר ('+Math.round(maxPx)+' פיקסלים) לא ייכנס במלואו במסך הבדיקה של מכשיר זה. בחרו מרחק קצר יותר אם הנבדק/ת לא רואה את הסימנים הקטנים.'}
   else w.hidden=true;
+}
+function renderSetupB(){
+  var items=[
+    'הניחו את המכשיר זקוף על משטח יציב, בגובה העיניים.',
+    'בהירות מסך מקסימלית, בלי זום, ותאורת חדר רגילה.',
+    'הנבדק/ת עומד/ת '+S.dist+' מטר מהמסך, כ-'+stepsOf(S.dist)+' צעדים.',
+    'הנבדק/ת מכסה/ה עין אחת בכף יד, בלי ללחוץ, ואומר/ת מה הוא/היא רואה. אם לא בטוח/ה, מנחשים.',
+    'המנחה לוחץ/ת על מה שנאמר, או מקליד/ה במקלדת באנגלית.'
+  ];
+  $('#howList').innerHTML=items.map(function(t){return '<li>'+esc(t)+'</li>'}).join('');
 }
 
 /* ---------- test engine ---------- */
@@ -517,7 +549,7 @@ function finish(t,credit){
   t.final=(t.bestPass===null)?null:r2(LV[t.bestPass][0]-0.02*t.credit);
 }
 function answer(code){
-  var t=S.t; if(!t||t.done) return;
+  var t=S.t; if(!t||t.done||S.cur!=='test') return;
   t.hist.push(snap(t));
   var cur=t.seq[t.pos]; t.last=cur;
   if(code===cur) t.correct++; else t.wrong++;
@@ -562,16 +594,14 @@ function buildKeys(){
     b.onclick=function(){answer(c)}; el.appendChild(b);
   });
   $('#tKbHint').textContent=S.set==='e'
-    ? 'המנחה לוחץ/ת על כיוון הזיז של ה-E (לאן ״הרגליים״ מצביעות), או משתמש/ת בחצי המקלדת. רווח הוא ״לא רואה״, ו-Backspace מבטל.'
-    : 'המנחה לוחץ/ת על מה שנאמר, או מקליד/ה אותו במקלדת (באנגלית). רווח הוא ״לא רואה״, ו-Backspace מבטל.';
+    ? 'המנחה לוחץ/ת על כיוון הזיזים של ה-E, או משתמש/ת בחצי המקלדת. רווח הוא ״לא רואה״, ו-Backspace מבטל.'
+    : 'המנחה לוחץ/ת על מה שנאמר, או מקליד/ה אותו באנגלית. רווח הוא ״לא רואה״, ו-Backspace מבטל.';
 }
 function renderTest(){
   var t=S.t, lv=LV[t.idx], step=STEPS.filter(function(s){return s.k===t.k})[0];
   $('#tEye').textContent=step.name; $('#tPin').hidden=!t.pin;
-  $('#tInfo').textContent='רמה '+lv[1]+' · סימן '+(t.pos+1);
-  var px=sizeMM(lv[0],S.dist)*scale;
-  var maxPx=sizeMM(1.0,S.dist)*scale;
-  $('#chart').style.height=Math.round(maxPx+48)+'px';
+  var px=sizeMM(lv[0],S.dist)*scale, avail=$('#chart').clientHeight;
+  $('#tInfo').textContent='רמה '+lv[1]+' · סימן '+(t.pos+1)+((avail&&px>avail-4)?' · הסימן גדול מהמסך':'');
   drawOpt(t.seq[t.pos],px);
 }
 function startTest(stepI,pin){
@@ -607,8 +637,8 @@ function showCover(i,pin){
   var st=STEPS[i]; S.stepI=i; S.coverPin=pin;
   $('#cvTitle').textContent=st.name+(pin?' · דרך חור סיכה':'');
   $('#cvMain').textContent=st.cover?('מכסים את '+st.cover+' בכף יד פתוחה, בלי ללחוץ על העין.'):'שתי העיניים פקוחות, כמו בראייה רגילה.';
-  var p=$('#cvPin'); p.hidden=!pin; if(pin)p.textContent='מחזיקים מול העין הבודקת קרטון עם חור בקוטר של כ-1 מ״מ, ומסתכלים דרכו.';
-  $('#cvDist').textContent='הנבדק/ת עומד/ת '+S.dist+' מטר מהטלפון, כ-'+stepsOf(S.dist)+' צעדים.'+(S.glasses?' ממשיכים עם המשקפיים או העדשות.':'');
+  var p=$('#cvPin'); p.hidden=!pin; if(pin)p.textContent='מחזיקים מול העין הבודקת קרטון עם חור בקוטר כ-1 מ״מ, ומסתכלים דרכו.';
+  $('#cvDist').textContent='הנבדק/ת עומד/ת '+S.dist+' מטר מהמסך, כ-'+stepsOf(S.dist)+' צעדים.'+(S.glasses?' ממשיכים עם המשקפיים או העדשות.':'');
   $('#cvSkip').hidden=(st.k!=='B'||pin);
   go('cover');
 }
@@ -627,21 +657,23 @@ function analyze(){
   var f=S.form, A={tone:'good',head:'',lead:'',points:[],urgent:[],est:[]};
   var eyes=['R','L'].filter(function(k){return S.res[k]&&S.res[k].done});
   var nm={R:'עין ימין',L:'עין שמאל'};
-  if(!eyes.length){A.tone='warn';A.head='לא הושלמה בדיקה של אף עין';A.lead='כדי לקבל הערכה יש להשלים בדיקה של עין אחת לפחות.';return A}
+  if(!eyes.length){A.tone='warn';A.head='לא הושלמה בדיקה של אף עין';A.lead='כדי לקבל הערכה יש להשלים בדיקה של עין אחת לפחות.';
+    if(f&&f.urg.length){var u0={flash:'הבזקי אור או נקודות צפות חדשות',curtain:'צל או וילון בשדה הראייה',sudden:'ירידה פתאומית בראייה',pain:'כאב עין חזק עם אדמומיות'};f.urg.forEach(function(x){A.urgent.push(u0[x])})}
+    return A}
   var worst=Math.max.apply(null,eyes.map(function(k){return lvv(S.res[k].plain)}));
   if(worst<=0.14){
     A.tone='good';
     A.head=S.glasses?'הראייה למרחק טובה עם התיקון הנוכחי':'הראייה למרחק נראית תקינה';
-    A.lead='בכל עין שנבדקה התקבלה חדות של 6/7.5 או טובה יותר. הבדיקה הזו לא מזהה רחק ראייה קל, אסטיגמטיזם קל, קושי בקריאה מקרוב או מחלות עיניים.';
+    A.lead='בכל עין שנבדקה התקבלה חדות של 6/7.5 או טובה יותר. הבדיקה לא מזהה רחק ראייה קל, אסטיגמטיזם קל, קושי בקריאה מקרוב או מחלות עיניים.';
   } else {
     A.tone=worst<=0.32?'warn':'bad';
     if(S.glasses){A.head='הראייה אינה מלאה גם עם התיקון הנוכחי';A.lead='ייתכן שהמרשם אינו מעודכן, או שיש סיבה אחרת לירידה. מומלץ בדיקה אצל אופטומטריסט.'}
-    else{A.head='ייתכן שדרושים משקפיים';A.lead='חדות הראייה נמוכה מ-6/7.5 בעין אחת לפחות. אחת הסיבות השכיחות היא קוצר ראייה. אופטומטריסט יקבע אם נדרש תיקון ואיזה.'}
+    else{A.head='ייתכן שדרושים משקפיים';A.lead='חדות הראייה נמוכה מ-6/7.5 בעין אחת לפחות. סיבה שכיחה היא קוצר ראייה. אופטומטריסט יקבע אם נדרש תיקון ואיזה.'}
   }
   eyes.forEach(function(k){
     var r=S.res[k], L=r.plain, red=lvv(L)>0.14, improved=false, notImproved=false;
     if(r.hasPin){var d=lvv(L)-lvv(r.pin);improved=d>=0.18;notImproved=d<=0.06&&red}
-    if(red&&r.hasPin&&improved) A.points.push(nm[k]+': הראייה השתפרה בבדיקה דרך חור סיכה. זה מרמז שהסיבה היא אופטית (מיקוד), ולכן משקפיים או עדשות אמורים לעזור.');
+    if(red&&r.hasPin&&improved) A.points.push(nm[k]+': הראייה השתפרה דרך חור סיכה. זה מרמז שהסיבה היא אופטית (מיקוד), ולכן משקפיים או עדשות אמורים לעזור.');
     if(red&&r.hasPin&&notImproved) A.points.push(nm[k]+': אין שיפור דרך חור סיכה. ייתכן שהסיבה אינה אופטית, ומומלצת בדיקת עיניים מקיפה.');
     if(red&&!S.glasses&&(!r.hasPin||improved)){
       var e=estMyopia(L);
@@ -653,9 +685,9 @@ function analyze(){
     if(dd>=0.2) A.points.push('יש הבדל של שתי שורות או יותר בין העיניים. מומלץ לבדוק זאת אצל אופטומטריסט גם אם עין אחת רואה היטב.');
   }
   if(f){
-    if(S.glasses&&worst<=0.14&&f.corr&&f.corr!=='none') A.points.push('המרשם הנוכחי נראה מתאים לראייה למרחק לפי הבדיקה הזו.');
+    if(S.glasses&&worst<=0.14&&f.corr&&f.corr!=='none') A.points.push('המרשם הנוכחי נראה מתאים לראייה למרחק לפי הבדיקה.');
     if(!S.glasses&&f.corr&&f.corr!=='none'&&f.corr!=='reading'&&worst>0.14) A.points.push('הבדיקה בוצעה בלי המשקפיים או העדשות. כדאי לחזור עליה איתם: אם החדות משתפרת, המרשם הנוכחי עדיין מתאים.');
-    if(f.age!==null&&f.age>=40&&f.sym.indexOf('blurNear')>=0) A.points.push('קושי בקריאה מקרוב אחרי גיל 40 מתאים לפרסביופיה (ראיית קרוב). הבדיקה הזו בודקת מרחק בלבד, ולכן יש לבדוק זאת בנפרד.');
+    if(f.age!==null&&f.age>=40&&f.sym.indexOf('blurNear')>=0) A.points.push('קושי בקריאה מקרוב אחרי גיל 40 מתאים לפרסביופיה (ראיית קרוב). הבדיקה הזו בודקת מרחק בלבד.');
     if(f.age!==null&&f.age<18) A.points.push('בילדים ובני נוער מומלצת בדיקה אצל אופטומטריסט גם כשהתוצאה תקינה.');
     if(f.hx.indexOf('diabetes')>=0) A.points.push('בסוכרת מומלצת בדיקת קרקעית עין אחת לשנה, בלי קשר לתוצאה כאן.');
     if(f.hx.indexOf('glaucomaFam')>=0) A.points.push('בהיסטוריה משפחתית של גלאוקומה מומלצת בדיקת לחץ תוך עיני וקרקעית עין.');
@@ -671,28 +703,16 @@ function estText(e,html){
   return r+'בערך '+diopStr(e.lo,html)+' עד '+diopStr(e.hi,html);
 }
 function rowHTML(name,L,tested){
-  if(!tested) return '<tr><td>'+name+'</td><td colspan="4" class="hint">לא נבדקה</td></tr>';
+  if(!tested) return '<tr><td>'+name+'</td><td colspan="3" class="hint">לא נבדקה</td></tr>';
   var v=va(L), b=band(L);
-  return '<tr><td>'+name+'</td><td class="num">'+esc(v.metric)+'</td><td class="num">'+esc(v.us)+'</td><td class="num">'+v.log+'</td><td><span class="pill '+b.c+'">'+esc(b.t)+'</span></td></tr>';
+  return '<tr><td>'+name+'</td><td class="num">'+esc(v.metric)+'</td><td class="num">'+esc(v.us)+'</td><td><span class="pill '+b.c+'">'+esc(b.t)+'</span></td></tr>';
 }
-function renderResult(){
-  var A=analyze(), f=S.form||{}, h='';
-  if(A.urgent.length){
-    h+='<div class="alert full"><h3>פנו בדחיפות לרופא עיניים או למיון</h3><p>סומנו תסמינים שאינם קשורים למשקפיים: '+esc(A.urgent.join(', '))+'. אין להמתין לבדיקה רגילה.</p></div>';
-  }
-  var tone={good:'good',warn:'warn',bad:'bad'}[A.tone];
-  h+='<div class="panel verdict full"><span class="pill '+tone+'" style="justify-self:start">'+(A.tone==='good'?'תקין לפי הבדיקה':(A.tone==='warn'?'כדאי להיבדק':'מומלץ להיבדק'))+'</span><h2>'+esc(A.head)+'</h2><p>'+esc(A.lead)+'</p></div>';
-  var rows='';
-  ['R','L','B'].forEach(function(k){
-    var nmm={R:'ימין',L:'שמאל',B:'שתיהן'}[k], r=S.res[k];
-    var ok=!!(r&&r.done);
-    rows+=rowHTML(nmm,ok?r.plain:null,ok);
-    if(ok&&r.hasPin) rows+=rowHTML(nmm+' · חור סיכה',r.pin,true);
-  });
-  h+='<div class="panel"><h3>חדות ראייה'+(S.glasses?' (עם תיקון)':' (בלי תיקון)')+'</h3><div class="tblwrap"><table><thead><tr><th>עין</th><th>6/x</th><th>20/x</th><th>logMAR</th><th>הערכה</th></tr></thead><tbody>'+rows+'</tbody></table></div><p class="hint">מרחק בדיקה: '+S.dist+' מטר · סימנים: '+SETNAMES[S.set]+'</p></div>';
-  if(A.est.length){
-    h+='<div class="panel"><h3>הערכה גסה של מספר, אם מדובר בקוצר ראייה</h3><ul class="plain">'+A.est.map(function(e){return '<li>'+estText(e,true)+'</li>'}).join('')+'</ul><p class="hint">זו הערכה לפי אופטיקה גיאומטרית פשוטה, וטווח הטעות רחב: היא תלויה בקוטר האישון, באסטיגמטיזם ובעוד גורמים. זה אינו מרשם. את המספר האמיתי קובעים בבדיקת רפרקציה אצל אופטומטריסט.</p></div>';
-  }
+
+/* ---------- result pages ---------- */
+function buildPages(){
+  var A=analyze(), f=S.form||{}, P=[];
+  S.A=A;
+  /* details and missing */
   var det=[];
   if(f.rx){
     var parts=[];
@@ -708,23 +728,56 @@ function renderResult(){
   var miss=[], rxo=f.rx||{};
   if(f.age===null||f.age===undefined) miss.push('גיל');
   if(!f.corr) miss.push('תיקון קבוע');
-  if(rxo.rs===null||rxo.rs===undefined) { if(rxo.rc===null||rxo.rc===undefined) { if(rxo.ls===null||rxo.ls===undefined) { if(rxo.lc===null||rxo.lc===undefined) miss.push('מרשם'); } } }
+  if((rxo.rs===null||rxo.rs===undefined)&&(rxo.rc===null||rxo.rc===undefined)&&(rxo.ls===null||rxo.ls===undefined)&&(rxo.lc===null||rxo.lc===undefined)) miss.push('מרשם');
   if(!f.last) miss.push('בדיקת עיניים אחרונה');
-  S.miss=miss; S.A=A;
+  S.miss=miss;
   var missTxt=miss.length?'לא הוזנו: '+miss.join(', ')+'. בנושאים האלה ההערכה מבוססת על תוצאות הבדיקה בלבד, ומה שלא סומן נחשב כלא דווח ולא כ״אין״.':'';
-  if(A.points.length||det.length||missTxt){
-    h+='<div class="panel">'+(A.points.length?'<h3>מה עוד כדאי לדעת</h3><ul class="plain">'+A.points.map(function(p){return '<li>'+esc(p)+'</li>'}).join('')+'</ul>':'')+(det.length?'<p class="hint">'+(f.name?esc(f.name)+' · ':'')+det.map(esc).join(' · ')+'</p>':'')+(missTxt?'<p class="hint">'+esc(missTxt)+'</p>':'')+'</div>';
-  }
-  h+='<details class="panel full"><summary>איך הבדיקה עובדת ועל מה היא מבוססת</summary><div class="body">'
-   +'<p><b>גודל הסימן.</b> סימן 6/6 תופס 5 דקות קשת, והפרטים בו (עובי הקו והרווחים) דקה קשת אחת. גובה הסימן במ״מ הוא 2 × מרחק × tan(זווית ÷ 2), ומומר לפיקסלים לפי הכיול שלכם.</p>'
-   +'<p><b>שורות.</b> הגדלים יורדים בקפיצות של 0.1 logMAR, עם 5 סימנים בכל רמה. רמה נחשבת כשנקראו 3 מתוך 5, וכל סימן נכון ברמה הבאה מוסיף 0.02, כמו בטבלאות ETDRS.</p>'
-   +'<p><b>חור סיכה.</b> שיפור הראייה דרכו מרמז על סיבה אופטית, ואי-שיפור מרמז על סיבה אחרת.</p>'
-   +'<p><b>דיוק.</b> במחקר שהשווה בדיקות ראייה ביתיות (אפליקציה, אתר, דף מודפס) לבדיקה במרפאה, התוצאות היו קרובות בשורה אחת, ובממוצע הראו חדות מעט טובה יותר מהמרפאה. הבדיקה כאן היא להדגמה ואינה בדיקה קלינית.</p>'
-   +'<p><b>הערכת המספר</b> היא חישוב גיאומטרי פשוט שלי (טשטוש ≈ קוטר אישון של 3 מ״מ × חוסר מיקוד), לא נוסחה מאומתת.</p>'
-   +'<p>מקורות: <a href="https://boi.org.il/en/economic-roles/coins/" target="_blank" rel="noopener">בנק ישראל, מידות המטבעות</a> · <a href="https://en.wikipedia.org/wiki/ISO/IEC_7810" target="_blank" rel="noopener">ISO/IEC 7810</a> · <a href="https://en.wikipedia.org/wiki/Snellen_chart" target="_blank" rel="noopener">טבלת סנלן</a> · <a href="https://en.wikipedia.org/wiki/LogMAR_chart" target="_blank" rel="noopener">טבלת logMAR</a> · <a href="https://eyewiki.aao.org/Visual_Acuity_Testing_in_Adults" target="_blank" rel="noopener">EyeWiki</a> · <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6701871" target="_blank" rel="noopener">V@home</a> · <a href="https://www.physiciansweekly.com/post/validation-of-home-visual-acuity-tests-for-telehealth-in-the-covid-19-era" target="_blank" rel="noopener">בדיקות ביתיות</a> · <a href="https://fpnotebook.com/Eye/Exam/PnhlTst.htm" target="_blank" rel="noopener">חור סיכה</a></p>'
-   +'</div></details>';
-  $('#resBody').innerHTML=h; $('#resBody').hidden=false;
   S.summary=buildSummary(A);
+
+  /* page 1: summary */
+  var h='';
+  if(A.urgent.length) h+='<div class="alert"><b>פנו בדחיפות לרופא עיניים או למיון</b><span>'+esc(A.urgent.join(', '))+'</span></div>';
+  h+='<div class="verdict"><span class="pill '+A.tone+'">'+(A.tone==='good'?'תקין לפי הבדיקה':(A.tone==='warn'?'כדאי להיבדק':'מומלץ להיבדק'))+'</span><h2>'+esc(A.head)+'</h2><p>'+esc(A.lead)+'</p></div>';
+  var rows='';
+  ['R','L','B'].forEach(function(k){
+    var n={R:'ימין',L:'שמאל',B:'שתיהן'}[k], r=S.res[k], ok=!!(r&&r.done);
+    rows+=rowHTML(n,ok?r.plain:null,ok);
+    if(ok&&r.hasPin) rows+=rowHTML(n+' · סיכה',r.pin,true);
+  });
+  h+='<div><h3>חדות ראייה'+(S.glasses?' (עם תיקון)':' (בלי תיקון)')+'</h3><table><thead><tr><th>עין</th><th>6/x</th><th>20/x</th><th>הערכה</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  P.push({h:h});
+  /* estimate */
+  if(A.est.length){
+    P.push({h:'<h2>הערכה גסה של מספר</h2><p class="lead">אם מדובר בקוצר ראייה בלבד:</p><div class="panel"><ul class="plain">'+A.est.map(function(e){return '<li>'+estText(e,true)+'</li>'}).join('')+'</ul></div><p class="hint">זו הערכה לפי אופטיקה גיאומטרית פשוטה, וטווח הטעות רחב: היא תלויה בקוטר האישון, באסטיגמטיזם ובעוד גורמים. זה אינו מרשם. את המספר האמיתי קובעים בבדיקת רפרקציה אצל אופטומטריסט.</p>'});
+  }
+  /* notes in chunks of 3 */
+  for(var i=0;i<A.points.length;i+=3){
+    var ch=A.points.slice(i,i+3), tot=Math.ceil(A.points.length/3);
+    P.push({h:'<h2>מה עוד כדאי לדעת'+(tot>1?' <span class="hint">'+(i/3+1)+' מתוך '+tot+'</span>':'')+'</h2><div class="panel"><ul class="plain">'+ch.map(function(p){return '<li>'+esc(p)+'</li>'}).join('')+'</ul></div>'});
+  }
+  /* details */
+  if(det.length||missTxt){
+    P.push({h:'<h2>פרטים שהוזנו</h2>'+(det.length?'<div class="panel"><ul class="plain">'+det.map(function(d){return '<li>'+esc(d)+'</li>'}).join('')+'</ul></div>':'')+(missTxt?'<p class="hint">'+esc(missTxt)+'</p>':'')});
+  }
+  /* about */
+  P.push({h:'<h2>איך הבדיקה עובדת</h2><div class="panel" style="font-size:14px">'
+    +'<p><b>גודל הסימן:</b> סימן 6/6 תופס 5 דקות קשת. הגובה במ״מ הוא 2 × מרחק × tan(זווית ÷ 2), ומומר לפיקסלים לפי הכיול.</p>'
+    +'<p><b>שורות:</b> קפיצות של 0.1 logMAR, 5 סימנים לרמה. רמה נחשבת כשנקראו 3 מתוך 5, וכל סימן נכון ברמה הבאה מוסיף 0.02, כמו בטבלאות ETDRS.</p>'
+    +'<p><b>דיוק:</b> בדיקות ראייה ביתיות נמצאו קרובות בשורה אחת לבדיקה במרפאה, ובממוצע הראו חדות מעט טובה יותר. זו בדיקת הדגמה.</p>'
+    +'<p><b>הערכת המספר</b> היא חישוב גיאומטרי פשוט (אישון 3 מ״מ), לא נוסחה מאומתת.</p></div>'
+    +'<div class="src"><a href="https://boi.org.il/en/economic-roles/coins/" target="_blank" rel="noopener">בנק ישראל</a><a href="https://en.wikipedia.org/wiki/ISO/IEC_7810" target="_blank" rel="noopener">ISO 7810</a><a href="https://en.wikipedia.org/wiki/Snellen_chart" target="_blank" rel="noopener">סנלן</a><a href="https://en.wikipedia.org/wiki/LogMAR_chart" target="_blank" rel="noopener">logMAR</a><a href="https://eyewiki.aao.org/Visual_Acuity_Testing_in_Adults" target="_blank" rel="noopener">EyeWiki</a><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6701871" target="_blank" rel="noopener">V@home</a><a href="https://www.physiciansweekly.com/post/validation-of-home-visual-acuity-tests-for-telehealth-in-the-covid-19-era" target="_blank" rel="noopener">בדיקות ביתיות</a><a href="https://fpnotebook.com/Eye/Exam/PnhlTst.htm" target="_blank" rel="noopener">חור סיכה</a></div>'});
+  /* share */
+  P.push({share:true,h:'<h2>דוח לשיתוף</h2><div class="prev"><img id="repImg" alt="דוח בדיקת הראייה כתמונה"></div><p class="hint" id="imgMsg" role="status">יוצר תמונה...</p><div class="btns2"><button class="btn sm" data-act="share" id="shareBtn" type="button" hidden>שיתוף</button><button class="btn sm" data-act="dl" type="button">הורדת תמונה</button><button class="btn sm ghost" data-act="copyimg" type="button">העתקת תמונה</button><a class="linkbtn" id="waBtn" target="_blank" rel="noopener">וואטסאפ (טקסט)</a></div>'});
+  S.pages=P; S.pi=0;
+}
+function showResult(){buildPages();go('result');showPage(0)}
+function showPage(i){
+  S.pi=i; var pg=S.pages[i], n=S.pages.length;
+  var el=$('#resPage'); el.innerHTML=pg.h; el.scrollTop=0;
+  $('#rPrev').hidden=(i===0);
+  $('#rDots').textContent=(i+1)+' / '+n;
+  $('#rNext').textContent=(i===n-1)?'בדיקה חדשה':'הבא';
+  if(pg.share) startImage();
 }
 function buildSummary(A){
   var f=S.form||{}, L=[];
@@ -761,12 +814,10 @@ function paintReport(g,W,H){
   function para(t,sz,w,col,after,x0,maxW){fnt(w,sz);var lh=Math.round(sz*1.5);wrapLines(g,t,maxW||(W-2*P)).forEach(function(l){g.fillStyle=col;g.textAlign='right';g.fillText(l,x0===undefined?R:x0,y);y+=lh});y+=(after||0)}
   function cell(t,x,align,col,sz,w,dir){fnt(w,sz);g.direction=dir||'rtl';g.fillStyle=col;g.textAlign=align;g.fillText(t,x,y);g.direction='rtl'}
   function pill(t,tone,right,yy,sz){fnt('600',sz);var w=g.measureText(t).width+28,hh=sz+14;g.fillStyle=TONE[tone][1];rr(g,right-w,yy,w,hh,hh/2);g.fill();g.fillStyle=TONE[tone][0];g.textAlign='right';g.fillText(t,right-14,yy+7);return hh}
-  /* header */
   para('בדיקת חדות ראייה',46,'700','#12242C',4);
   para('דוח הדגמה · '+new Date().toLocaleDateString('he-IL')+(f.name?' · '+f.name:''),26,'400','#4A5F68',6);
   para('מרחק '+S.dist+' מטר · סימנים: '+SETNAMES[S.set]+' · '+(S.glasses?'עם תיקון':'בלי תיקון'),24,'400','#4A5F68',14);
   g.fillStyle='#C6D2D7';g.fillRect(P,y,W-2*P,2);y+=22;
-  /* urgent */
   if(A.urgent.length){
     fnt('400',26);var txt='תסמינים שדורשים התייחסות דחופה: '+A.urgent.join(', ')+'. יש לפנות לרופא עיניים או למיון.';
     var lines=wrapLines(g,txt,W-2*P-48),lh=39,bh=lines.length*lh+90,y0=y;
@@ -774,12 +825,10 @@ function paintReport(g,W,H){
     y+=20;para('פנו בדחיפות לרופא עיניים',30,'700',TONE.bad[0],6,R-24,W-2*P-48);
     para(txt,26,'400','#12242C',0,R-24,W-2*P-48);y=y0+bh+22;
   }
-  /* verdict */
   var ptxt=A.tone==='good'?'תקין לפי הבדיקה':(A.tone==='warn'?'כדאי להיבדק':'מומלץ להיבדק');
   var ph=pill(ptxt,A.tone,R,y,24);y+=ph+14;
   para(A.head,38,'700','#12242C',6);
   para(A.lead,28,'400','#12242C',20);
-  /* table */
   para('חדות ראייה'+(S.glasses?' (עם תיקון)':' (בלי תיקון)'),28,'600','#12242C',6);
   cell('עין',R,'right','#4A5F68',22,'600');cell('6/x',800,'center','#4A5F68',22,'600','ltr');cell('20/x',650,'center','#4A5F68',22,'600','ltr');cell('logMAR',500,'center','#4A5F68',22,'600','ltr');cell('הערכה',380,'right','#4A5F68',22,'600');y+=38;
   var rows=[];
@@ -797,16 +846,14 @@ function paintReport(g,W,H){
     pill(b.t,b.c,380,y-2,22);y+=56;
   });
   g.fillStyle='#E3EAED';g.fillRect(P,y-4,W-2*P,2);y+=22;
-  /* estimate */
   if(A.est.length){
     para('הערכה גסה של מספר, אם מדובר בקוצר ראייה',28,'600','#12242C',4);
-    A.est.forEach(function(e){para(estText(e,false).replace(/-/g,MINUS),28,'400','#12242C',2)});
+    A.est.forEach(function(e){para(estText(e,false).replace(/-(\d)/g,MINUS+'$1'),28,'400','#12242C',2)});
     para('זו הערכה גיאומטרית פשוטה ולא מרשם. את המספר האמיתי קובעים אצל אופטומטריסט.',22,'400','#4A5F68',20);
   }
-  /* points */
   if(A.points.length){
     para('מה עוד כדאי לדעת',28,'600','#12242C',4);
-    A.points.slice(0,6).forEach(function(t){para('\u200F• '+t,25,'400','#12242C',6)});
+    A.points.slice(0,6).forEach(function(t){para('‏• '+t,25,'400','#12242C',6)});
     y+=14;
   }
   if(S.miss&&S.miss.length) para('לא הוזנו: '+S.miss.join(', ')+'. מה שלא סומן נחשב כלא דווח.',22,'400','#4A5F68',14);
@@ -826,20 +873,18 @@ function makeReport(cb){
     } else run();
   }catch(e){run()}
 }
-function imgMsg(t){$('#imgMsg').textContent=t}
-var FALLBACK='אפשר לשמור את התמונה בלחיצה ארוכה עליה (בטלפון) או בלחיצה ימנית (במחשב).';
-function openImage(){
-  imgMsg('');
+var FALLBACK='לחיצה ארוכה על התמונה (בטלפון) או לחיצה ימנית (במחשב) לשמירה או העתקה.';
+function imgMsg(t){var m=$('#imgMsg'); if(m) m.textContent=t}
+function startImage(){
+  S.imgBlob=null;
   makeReport(function(c){
-    var url=c.toDataURL('image/png');
-    $('#repImg').src=url; S.imgUrl=url; S.imgBlob=null;
+    if(S.cur!=='result'||!S.pages[S.pi]||!S.pages[S.pi].share) return;
+    var url=c.toDataURL('image/png'), im=$('#repImg'); if(!im) return;
+    im.src=url; S.imgUrl=url;
     try{c.toBlob(function(b){S.imgBlob=b},'image/png')}catch(e){}
-    $('#waBtn').href='https://wa.me/?text='+encodeURIComponent(S.summary||'');
-    var standalone=false; try{standalone=(window.top===window.self)}catch(e){}
-    $('#shareBtn').hidden=!(navigator.share&&navigator.canShare);
-    $('#imgHelp').textContent=(standalone?'אפשר להוריד את התמונה או לשתף אותה ישירות. ':'')+FALLBACK+' הקישור לוואטסאפ שולח את הסיכום כטקסט. את התמונה עצמה מצרפים בוואטסאפ ידנית לאחר השמירה.';
-    var pn=$('#imgPanel'); pn.hidden=false;
-    try{pn.scrollIntoView({behavior:'smooth',block:'start'})}catch(e){}
+    var wa=$('#waBtn'); if(wa) wa.href='https://wa.me/?text='+encodeURIComponent(S.summary||'');
+    var sb=$('#shareBtn'); if(sb) sb.hidden=!(navigator.share&&navigator.canShare);
+    imgMsg('לחיצה ארוכה על התמונה לשמירה או העתקה. וואטסאפ שולח טקסט בלבד, את התמונה מצרפים ידנית.');
   });
 }
 function downloadImage(){
@@ -874,12 +919,20 @@ function copyImage(){
 
 /* ---------- wiring ---------- */
 function reset(){
-  S.res={R:null,L:null,B:null};S.form=null;S.t=null;S.stepI=0;$('#imgPanel').hidden=true;$('#imgMsg').textContent='';
-  $('#detailsForm').reset(); $('#copyFallback').hidden=true;
+  S.res={R:null,L:null,B:null};S.form=null;S.t=null;S.stepI=0;S.pages=[];S.pi=0;
+  $$('.fs input,.fs select').forEach(function(x){if(x.type==='checkbox')x.checked=false;else x.value=''});
+}
+function formStep(i,dir){
+  var n=i+dir;
+  if(n<0){go('handoff');return}
+  if(n>4){S.form=readForm();showResult();return}
+  go('f'+(n+1));
 }
 function wire(){
   $('#goCalib').onclick=function(){go('calib')};
-  $('#backCalib').onclick=function(){go('calib')};
+  $('#saBack').onclick=function(){go('calib')};
+  $('#saNext').onclick=function(){go('setupB')};
+  $('#sbBack').onclick=function(){go('setupA')};
   $('#startTests').onclick=function(){
     if(zoomChanged()){var z=$('#zoomWarn');z.hidden=false;z.textContent='הזום בדפדפן או ברזולוציה השתנה מאז הכיול. כיילו שוב כדי שהסימנים יהיו בגודל הנכון.';go('calib');return}
     reset();showCover(0,false)};
@@ -893,18 +946,25 @@ function wire(){
   };
   $('#erPin').onclick=function(){showCover(S.stepI,true)};
   $('#erNext').onclick=nextStep;
-  $('#hoGo').onclick=function(){go('form')};
-  $('#detailsForm').addEventListener('submit',function(e){e.preventDefault();S.form=readForm();renderResult();go('result')});
-  $('#formSkip').onclick=function(){S.form=null;renderResult();go('result')};
-  $('#again').onclick=function(){reset();go('setup')};
-  $('#imgBtn').onclick=openImage;
-  $('#shareBtn').onclick=shareImage;
-  $('#dlBtn').onclick=downloadImage;
-  $('#copyImgBtn').onclick=copyImage;
-  $('#copyBtn').onclick=function(){
-    var txt=S.summary||'', fb=function(){var a=$('#copyArea');a.value=txt;$('#copyFallback').hidden=false;a.focus();a.select()};
-    try{ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(function(){$('#copyBtn').textContent='הועתק'},fb)} else fb() }catch(e){fb()}
+  $('#hoGo').onclick=function(){go('f1')};
+  $$('.fs').forEach(function(sec,i){
+    sec.addEventListener('click',function(e){
+      var b=e.target.closest('[data-act]'); if(!b) return;
+      var a=b.getAttribute('data-act');
+      if(a==='next') formStep(i,1);
+      else if(a==='prev') formStep(i,-1);
+      else if(a==='skip'){S.form=null;showResult()}
+    });
+  });
+  $('#rNext').onclick=function(){
+    if(S.pi>=S.pages.length-1){reset();go('setupA')} else showPage(S.pi+1);
   };
+  $('#rPrev').onclick=function(){if(S.pi>0)showPage(S.pi-1)};
+  $('#resPage').addEventListener('click',function(e){
+    var b=e.target.closest('[data-act]'); if(!b) return;
+    var a=b.getAttribute('data-act');
+    if(a==='dl') downloadImage(); else if(a==='share') shareImage(); else if(a==='copyimg') copyImage();
+  });
   document.addEventListener('keydown',function(e){
     if(S.cur!=='test') return;
     var tg=e.target&&e.target.tagName; if(tg==='INPUT'||tg==='TEXTAREA'||tg==='SELECT') return;
@@ -918,7 +978,7 @@ function wire(){
   window.addEventListener('resize',function(){
     if(S.cur==='calib') renderShape();
     if(S.cur==='test'&&S.t) renderTest();
-    if(S.cur==='setup') distInfo();
+    if(S.cur==='setupA') distInfo();
   });
 }
 initCalib(); wire(); go('intro');
