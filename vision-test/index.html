@@ -63,6 +63,26 @@ body{
 .steps li.on,.steps li.done{background:var(--accent)}
 .steps li.on{height:6px;margin-top:-1px}
 
+/* phone-as-keypad */
+.modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px}
+.modal .box{background:var(--surface);color:var(--ink);border-radius:14px;padding:16px;max-width:360px;width:100%;max-height:100%;display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center}
+.modal .qr{background:#fff;padding:8px;border-radius:8px;line-height:0}
+.modal .qr svg{width:min(52vw,200px,34vh);height:auto;display:block}
+.kbcode{font-family:var(--mono);font-weight:600;font-size:30px;letter-spacing:.12em}
+.kbstat{font-size:14px;color:var(--ink-2);min-height:20px}
+.kbstat.ok{color:var(--good);font-weight:600}
+#remote{position:fixed;inset:0;display:flex;flex-direction:column;gap:10px;padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom));background:var(--bg,var(--surface));color:var(--ink);font-family:var(--font);overflow:hidden}
+#remote .rtop{display:flex;justify-content:space-between;align-items:center;gap:8px}
+#remote .rkeys{flex:1;min-height:0;display:grid;gap:8px;direction:ltr}
+#remote .rkeys.arrows button{font-size:clamp(48px,16vw,80px)}
+#remote .rkeys button{font-family:var(--mono);font-weight:600;font-size:clamp(26px,8vw,44px);border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;padding:0;touch-action:manipulation}
+#remote .rkeys button:active{background:var(--accent-soft)}
+#remote .rkeys button.sp{visibility:hidden}
+#remote .rrow{display:flex;gap:8px}
+#remote .rrow button{flex:1}
+#remote .entry{flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px;text-align:center}
+#remote input{font:inherit;font-family:var(--mono);font-size:32px;text-align:center;letter-spacing:.2em;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);width:100%;box-sizing:border-box}
+
 .screen{flex:1;min-height:0;display:flex;flex-direction:column;gap:10px;overflow:auto;overscroll-behavior:contain}
 .screen>*{flex:none;min-width:0}
 .screen>.grow{flex:1 1 auto;min-height:0}
@@ -185,7 +205,7 @@ a{color:var(--accent)}
       </ul>
     </div>
     <p class="note">הבדיקה להדגמה בלבד. היא לא מחליפה בדיקה אצל אופטומטריסט או רופא עיניים, ואינה מתאימה לקביעת מרשם.</p>
-    <div class="nav"><button class="btn" id="goCalib" type="button">מתחילים בכיול</button></div>
+    <div class="nav"><button class="btn" id="goCalib" type="button">מתחילים בכיול</button><div class="row"><button class="btn ghost sm" id="kbIAm" type="button">אני הטלפון-מקלדת, להזין קוד</button></div></div>
   </section>
 
   <!-- calibration -->
@@ -222,7 +242,7 @@ a{color:var(--accent)}
     <div class="panel">
       <ol class="how" id="howList"></ol>
     </div>
-    <div class="nav"><button class="btn" id="startTests" type="button">מתחילים בעין ימין</button><div class="row"><button class="btn ghost sm" id="sbBack" type="button">הקודם</button></div></div>
+    <div class="nav"><button class="btn" id="startTests" type="button">מתחילים בעין ימין</button><div class="row"><button class="btn ghost sm" id="sbBack" type="button">הקודם</button><button class="btn ghost sm" id="kbOpen1" type="button">חבר טלפון כמקלדת</button></div></div>
   </section>
 
   <!-- cover -->
@@ -243,7 +263,7 @@ a{color:var(--accent)}
     <div class="chart grow" id="chart"><canvas id="cv"></canvas></div>
     <div class="side">
       <div class="keys" id="keys"></div>
-      <div class="row"><button class="btn ghost sm" id="tUnknown" type="button">לא רואה</button><button class="btn ghost sm" id="tUndo" type="button">ביטול אחרון</button><button class="btn ghost sm" id="tSkip" type="button">דלג על העין</button></div>
+      <div class="row"><button class="btn ghost sm" id="tUnknown" type="button">לא רואה</button><button class="btn ghost sm" id="tUndo" type="button">ביטול אחרון</button><button class="btn ghost sm" id="tSkip" type="button">דלג על העין</button><button class="btn ghost sm" id="kbOpen2" type="button">טלפון-מקלדת</button></div>
       <p class="hint" id="tKbHint"></p>
     </div>
   </section>
@@ -340,7 +360,29 @@ a{color:var(--accent)}
     <div class="nav"><button class="btn" id="rNext" type="button">הבא</button><div class="row"><button class="btn ghost sm" id="rPrev" type="button">הקודם</button><span class="hint" id="rDots" dir="ltr" style="align-self:center;text-align:center"></span></div></div>
   </section>
 </main>
+<div class="modal" id="kbModal" hidden role="dialog" aria-modal="true" aria-label="חיבור טלפון כמקלדת">
+  <div class="box">
+    <strong>חיבור טלפון כמקלדת</strong>
+    <div class="qr" id="kbQr"></div>
+    <div class="small">סרקו עם הטלפון השני, או פתחו שם את האתר והזינו את הקוד:</div>
+    <div class="kbcode" id="kbCode" dir="ltr">------</div>
+    <div class="kbstat" id="kbStat" role="status"></div>
+    <div class="row"><button class="btn ghost sm" id="kbDrop" type="button" hidden>נתק</button><button class="btn sm" id="kbClose" type="button">סגור</button></div>
+  </div>
+</div>
+<section id="remote" dir="rtl" lang="he" hidden>
+  <div class="rtop"><strong>טלפון-מקלדת</strong><span class="kbstat" id="rStat" role="status"></span></div>
+  <div class="entry" id="rEntry" hidden>
+    <div>הזינו את הקוד שמופיע אצל המנחה</div>
+    <input id="rCodeIn" inputmode="numeric" maxlength="6" autocomplete="off" dir="ltr" placeholder="000000">
+    <button class="btn" id="rGo" type="button">התחברות</button>
+  </div>
+  <div class="rkeys" id="rKeys" hidden></div>
+  <div class="rrow" id="rBtns" hidden><button class="btn ghost" id="rUnk" type="button">לא רואה</button><button class="btn ghost" id="rUndo" type="button">ביטול אחרון</button></div>
+</section>
 
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
 document.documentElement.setAttribute('dir','rtl');
 document.documentElement.setAttribute('lang','he');
@@ -445,6 +487,7 @@ function go(id){
   if(id==='calib') renderShape();
   if(id==='setupA') renderSetupA();
   if(id==='setupB') renderSetupB();
+  kbPush();
 }
 
 /* ---------- segmented control ---------- */
@@ -604,6 +647,7 @@ function renderTest(){
   var px=sizeMM(lv[0],S.dist)*scale, avail=$('#chart').clientHeight;
   $('#tInfo').textContent='רמה '+lv[1]+' · סימן '+(t.pos+1)+((avail&&px>avail-4)?' · הסימן גדול מהמסך':'');
   drawOpt(t.seq[t.pos],px);
+  kbPush();
 }
 function startTest(stepI,pin){
   S.stepI=stepI; S.t=newTest(STEPS[stepI],pin);
@@ -940,6 +984,10 @@ function wire(){
   $('#cvGo').onclick=function(){startTest(S.stepI,!!S.coverPin)};
   $('#cvSkip').onclick=function(){S.res.B=null;go('handoff')};
   $('#tUnknown').onclick=function(){answer('?')};
+  $('#kbOpen1').onclick=kbOpen; $('#kbOpen2').onclick=kbOpen; $('#kbClose').onclick=kbClose;
+  $('#kbDrop').onclick=function(){kbStop();$('#kbCode').textContent='------';$('#kbQr').innerHTML='';kbStat('נותק');};
+  $('#kbIAm').onclick=function(){location.hash='remote';location.reload()};
+
   $('#tUndo').onclick=undo;
   $('#tSkip').onclick=function(){
     var k=STEPS[S.stepI].k; if(S.t&&S.t.pin){/* keep plain result */} else S.res[k]=null;
@@ -984,7 +1032,139 @@ function wire(){
     if(S.cur==='setupA') distInfo();
   });
 }
-initCalib(); wire(); go('intro');
+
+/* ---------- phone-as-keypad (WebRTC via public PeerJS broker, no account) ---------- */
+var PAGES='https://rb077858.github.io/small/vision-test/';
+var KB={peer:null,conn:null,code:null,tries:0};
+var REMOTE_CODE=(location.hash.match(/[#&]k=(\d{6})/)||[])[1]||null;
+var REMOTE=!!REMOTE_CODE;
+function peerOpts(){return window.__VT_PEER||{}}
+function kbBase(){
+  var h=location.hostname;
+  if(h==='rb077858.github.io'||h==='localhost'||h==='127.0.0.1') return location.origin+location.pathname;
+  return PAGES;
+}
+function kbStat(t,ok){var e=$('#kbStat');e.textContent=t;e.className='kbstat'+(ok?' ok':'')}
+function kbConnected(){return !!(KB.conn&&KB.conn.open)}
+function kbSend(o){try{if(kbConnected()) KB.conn.send(o)}catch(e){}}
+function kbPush(){
+  if(!kbConnected()) return;
+  var t=S.t, info='';
+  if(S.cur==='test'&&t){info=$('#tEye').textContent}
+  kbSend({t:'cfg',set:S.set,active:S.cur==='test',info:info});
+}
+function kbRefreshBtns(){
+  var on=kbConnected();
+  ['#kbOpen1','#kbOpen2'].forEach(function(q){var b=$(q);if(b) b.textContent=on?'טלפון-מקלדת: מחובר':(q==='#kbOpen1'?'חבר טלפון כמקלדת':'טלפון-מקלדת')});
+  $('#kbDrop').hidden=!on;
+}
+function kbStart(){
+  if(typeof Peer==='undefined'||typeof qrcode==='undefined'){kbStat('לא ניתן לטעון את רכיב החיבור. בדקו חיבור לאינטרנט.');return}
+  KB.code=String(Math.floor(100000+Math.random()*900000));
+  $('#kbCode').textContent=KB.code; $('#kbQr').innerHTML='';
+  kbStat('מתחבר לשירות ההתאמה...');
+  var peer; try{peer=new Peer('vtkb'+KB.code,peerOpts())}catch(e){kbStat('החיבור נכשל');return}
+  KB.peer=peer;
+  peer.on('open',function(){
+    var url=kbBase()+'#k='+KB.code;
+    var q=qrcode(0,'M'); q.addData(url); q.make();
+    $('#kbQr').innerHTML=q.createSvgTag(4,0);
+    kbStat('ממתין לטלפון השני...');
+  });
+  peer.on('connection',function(c){
+    if(kbConnected()){c.on('open',function(){c.close()});return}
+    KB.conn=c;
+    c.on('open',function(){kbStat('הטלפון מחובר',true);kbRefreshBtns();kbPush();setTimeout(function(){if(kbConnected()&&!$('#kbModal').hidden) kbClose()},900)});
+    c.on('data',kbData);
+    c.on('close',function(){if(KB.conn===c){KB.conn=null;kbStat('הטלפון התנתק. ממתין לחיבור מחדש...');kbRefreshBtns()}});
+    c.on('error',function(){});
+  });
+  peer.on('error',function(err){
+    if(err&&err.type==='unavailable-id'&&KB.tries<5){KB.tries++;kbStop();kbStart();return}
+    if(err&&err.type==='disconnected') return;
+    kbStat('החיבור לשירות ההתאמה נכשל. בדקו אינטרנט ונסו שוב.');
+  });
+  peer.on('disconnected',function(){try{peer.reconnect()}catch(e){}});
+}
+function kbStop(){
+  try{if(KB.conn) KB.conn.close()}catch(e){}
+  try{if(KB.peer) KB.peer.destroy()}catch(e){}
+  KB.peer=null;KB.conn=null;kbRefreshBtns();
+}
+function kbData(d){
+  if(!d||typeof d!=='object') return;
+  if(d.t==='u'){if(S.cur==='test') undo(); return}
+  if(d.t==='a'&&typeof d.c==='string'&&S.cur==='test'){
+    var ok=d.c==='?'||(S.set==='letters'&&SLOAN.indexOf(d.c)>=0)||(S.set==='digits'&&DIGITS.indexOf(d.c)>=0)||(S.set==='e'&&'rdlu'.indexOf(d.c)>=0&&d.c.length===1);
+    if(ok) answer(d.c);
+  }
+}
+function kbOpen(){
+  $('#kbModal').hidden=false;
+  if(!KB.peer){KB.tries=0;kbStart()} else if(kbConnected()) kbStat('הטלפון מחובר',true);
+  kbRefreshBtns();
+}
+function kbClose(){$('#kbModal').hidden=true}
+
+/* remote (the phone acting as keypad) */
+function initRemote(){
+  document.documentElement.classList.add('remote');
+  $('#app').hidden=true; $('#remote').hidden=false;
+  var stat=function(t,ok){var e=$('#rStat');e.textContent=t;e.className='kbstat'+(ok?' ok':'')};
+  var conn=null, peer=null, cfg=null, code=REMOTE_CODE, retry=null;
+  function buzz(){try{navigator.vibrate&&navigator.vibrate(12)}catch(e){}}
+  function send(o){try{if(conn&&conn.open) conn.send(o)}catch(e){}}
+  function render(){
+    var k=$('#rKeys'), b=$('#rBtns');
+    if(!cfg||!cfg.active){
+      k.hidden=true; b.hidden=!conn; k.innerHTML='';
+      stat(conn?'מחובר. ממתין להתחלת הבדיקה אצל המנחה':'',!!conn);
+      return;
+    }
+    stat('מחובר'+(cfg.info?' · '+cfg.info:''),true);
+    k.hidden=false; b.hidden=false; k.innerHTML='';
+    var key=k.getAttribute('data-set');
+    var mk=function(label,code2,cls,aria){var x=document.createElement('button');x.type='button';x.textContent=label;if(cls)x.className=cls;if(aria)x.setAttribute('aria-label',aria);x.onclick=function(){buzz();send({t:'a',c:code2})};k.appendChild(x);return x};
+    k.classList.toggle('arrows',cfg.set==='e');
+    if(cfg.set==='e'){
+      k.style.gridTemplateColumns='repeat(3,1fr)';k.style.gridTemplateRows='repeat(3,1fr)';
+      mk('','', 'sp'); mk('↑','u',null,'למעלה'); mk('','', 'sp');
+      mk('←','l',null,'שמאלה'); mk('','', 'sp'); mk('→','r',null,'ימינה');
+      mk('','', 'sp'); mk('↓','d',null,'למטה'); mk('','', 'sp');
+      Array.prototype.forEach.call(k.querySelectorAll('.sp'),function(x){x.disabled=true});
+    }else{
+      var list=cfg.set==='digits'?DIGITS:SLOAN, cols=cfg.set==='digits'?4:5;
+      k.style.gridTemplateColumns='repeat('+cols+',1fr)';k.style.gridTemplateRows='repeat('+Math.ceil(list.length/cols)+',1fr)';
+      list.forEach(function(c){mk(c,c)});
+    }
+  }
+  function connect(){
+    clearTimeout(retry);
+    if(typeof Peer==='undefined'){stat('לא ניתן לטעון את רכיב החיבור');return}
+    stat('מתחבר...');
+    try{if(peer) peer.destroy()}catch(e){}
+    peer=new Peer(peerOpts());
+    peer.on('open',function(){
+      var c=peer.connect('vtkb'+code,{reliable:true});
+      var failed=setTimeout(function(){if(!c.open){stat('לא נמצא מנחה עם הקוד הזה. בדקו את הקוד.');try{c.close()}catch(e){};retry=setTimeout(connect,4000)}},9000);
+      c.on('open',function(){clearTimeout(failed);conn=c;$('#rEntry').hidden=true;$('#rBtns').hidden=false;render()});
+      c.on('data',function(d){if(d&&d.t==='cfg'){cfg=d;render()}});
+      c.on('close',function(){conn=null;cfg=null;render();stat('החיבור נותק. מתחבר מחדש...');retry=setTimeout(connect,1500)});
+      c.on('error',function(){});
+    });
+    peer.on('error',function(){stat('החיבור נכשל. מנסה שוב...');retry=setTimeout(connect,3000)});
+  }
+  $('#rUnk').onclick=function(){buzz();send({t:'a',c:'?'})};
+  $('#rUndo').onclick=function(){buzz();send({t:'u'})};
+  $('#rBtns').hidden=true;
+  if(code){connect()}
+  else{
+    $('#rEntry').hidden=false;
+    $('#rGo').onclick=function(){var v=$('#rCodeIn').value.replace(/\D/g,'');if(v.length!==6){stat('הקוד הוא 6 ספרות');return}code=v;stat('');connect()};
+  }
+}
+
+if(REMOTE_CODE){initRemote()} else if(/[#&]remote\b/.test(location.hash)){REMOTE=true;initRemote()} else {initCalib(); wire(); go('intro');}
 })();
 </script>
 
