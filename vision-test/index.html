@@ -592,10 +592,10 @@ function buildKeys(){
   list.forEach(function(c){
     var b=document.createElement('button'); b.type='button';
     b.textContent=S.set==='e'?ARROW[c]:c; b.setAttribute('aria-label',S.set==='e'?({r:'ימינה',d:'למטה',l:'שמאלה',u:'למעלה'}[c]):c);
-    b.onclick=function(){answer(c)}; el.appendChild(b);
+    b.onclick=function(){b.blur();answer(c)}; el.appendChild(b);
   });
   $('#tKbHint').textContent=S.set==='e'
-    ? 'המנחה לוחץ/ת על כיוון הזיזים של ה-E, או משתמש/ת בחצי המקלדת. רווח הוא ״לא רואה״, ו-Backspace מבטל.'
+    ? 'המנחה לוחץ/ת על כיוון הזיזים של ה-E, או משתמש/ת בחצי המקלדת (↑ ↓ ← →). רווח הוא ״לא רואה״, ו-Backspace מבטל.'
     : 'המנחה לוחץ/ת על מה שנאמר, או מקליד/ה אותו באנגלית. רווח הוא ״לא רואה״, ו-Backspace מבטל.';
 }
 function renderTest(){
@@ -970,6 +970,8 @@ function wire(){
     if(S.cur!=='test') return;
     var tg=e.target&&e.target.tagName; if(tg==='INPUT'||tg==='TEXTAREA'||tg==='SELECT') return;
     var k=e.key;
+    if(e.ctrlKey||e.metaKey||e.altKey) return;
+    if(e.repeat){ if(k==='Backspace'||k===' '||k.indexOf('Arrow')===0) e.preventDefault(); return; }
     if(k==='Backspace'){e.preventDefault();undo();return}
     if(k===' '||k==='?'){e.preventDefault();answer('?');return}
     if(S.set==='letters'&&/^[a-zA-Z]$/.test(k)){var c=k.toUpperCase(); if(SLOAN.indexOf(c)>=0){answer(c)} return}
